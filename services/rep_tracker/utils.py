@@ -1,19 +1,17 @@
-# utils.py
 import math
-from typing import Tuple, List
+from typing import Tuple
 
 def calculate_angle(a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]) -> float:
     """
-    Calculates the angle between three points with the second point as the vertex.
+    Calculates the 2D angle between three points with the second point as the vertex.
 
     Args:
-        a (Tuple[float, float]): The (x, y) coordinates of the first point.
-        b (Tuple[float, float]): The (x, y) coordinates of the vertex point.
-        c (Tuple[float, float]): The (x, y) coordinates of the third point.
+        a: (x, y) coordinates of the first point.
+        b: (x, y) coordinates of the vertex point.
+        c: (x, y) coordinates of the third point.
 
     Returns:
-        float: The angle in degrees between the two vectors (ba and bc). 
-               Returns 0.0 if either vector has a magnitude of 0.
+        float: The angle in degrees (0.0 if vectors are invalid).
     """
     ba = [a[0] - b[0], a[1] - b[1]]
     bc = [c[0] - b[0], c[1] - b[1]]
@@ -29,40 +27,13 @@ def calculate_angle(a: Tuple[float, float], b: Tuple[float, float], c: Tuple[flo
     return math.degrees(math.acos(cos_angle))
 
 def get_midpoint(p1: Tuple[float, float], p2: Tuple[float, float]) -> Tuple[float, float]:
-    """
-    Calculates the geometric midpoint between two 2D coordinates.
-
-    Args:
-        p1 (Tuple[float, float]): The (x, y) coordinates of the first point.
-        p2 (Tuple[float, float]): The (x, y) coordinates of the second point.
-
-    Returns:
-        Tuple[float, float]: The (x, y) coordinates of the midpoint.
-    """
+    """Calculates the geometric midpoint between two 2D coordinates."""
     return ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
 
 def calculate_vertical_displacement(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
-    """
-    Calculates the absolute vertical (Y-axis) distance between two points.
-
-    Args:
-        p1 (Tuple[float, float]): The (x, y) coordinates of the first point.
-        p2 (Tuple[float, float]): The (x, y) coordinates of the second point.
-
-    Returns:
-        float: The absolute difference between the Y-coordinates.
-    """
+    """Calculates the absolute vertical (Y-axis) distance between two points."""
     return abs(p1[1] - p2[1])
 
 def calculate_horizontal_displacement(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
-    """
-    Calculates the absolute horizontal (X-axis) distance between two points.
-
-    Args:
-        p1 (Tuple[float, float]): The (x, y) coordinates of the first point.
-        p2 (Tuple[float, float]): The (x, y) coordinates of the second point.
-
-    Returns:
-        float: The absolute difference between the X-coordinates.
-    """
+    """Calculates the absolute horizontal (X-axis) distance between two points."""
     return abs(p1[0] - p2[0])
