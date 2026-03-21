@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { Dumbbell } from 'lucide-react'
 
 const MESSAGES = [
-  { text: "Your personal trainer is working out for you", sub: "while you chill" },
+  { text: "Your personal trainer is working out for you", sub: "while you chill :)" },
   { text: "Crunching the numbers", sub: "so you can crunch your abs" },
   { text: "Searching the best exercises", sub: "from our database of thousands" },
   { text: "Crafting your perfect meal plan", sub: "calories in, gains out" },
-  { text: "Almost there", sub: "good things take a little time" },
   { text: "Fine-tuning your workout splits", sub: "every rep counts" },
   { text: "Balancing your macros", sub: "protein, carbs, fats — sorted" },
+  { text: "Warming up the AI brain", sub: "it's leg day for the algorithm" },
+  { text: "Picking the right weights for you", sub: "no ego lifting here" },
+  { text: "Almost there", sub: "good things take a little time" },
 ]
 
 export default function LoadingScreen() {

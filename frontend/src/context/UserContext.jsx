@@ -48,6 +48,13 @@ export function UserProvider({ children }) {
     localStorage.removeItem(PLAN_KEY)
   }, [])
 
+  const resetOnboarding = useCallback(() => {
+    setPlanData(null)
+    setUser(null)
+    localStorage.removeItem(PLAN_KEY)
+    localStorage.removeItem(STORAGE_KEY)
+  }, [])
+
   const saveProfile = useCallback((profile) => {
     setUser(profile)
     saveToStorage(STORAGE_KEY, profile)
@@ -68,6 +75,7 @@ export function UserProvider({ children }) {
       hasCompletedOnboarding,
       login,
       logout,
+      resetOnboarding,
       saveProfile,
       savePlan,
       defaultProfile,
