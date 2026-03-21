@@ -14,8 +14,8 @@ A mobile-first fitness companion built at the **Cursor Hackathon 2026**. TuebiFi
 
 ## Features
 
-- **Rep Tracker** — Upload an exercise video and get an annotated output with skeleton overlay, real-time rep counting, and form feedback. Supports squats, pull-ups, push-ups, and deadlifts.
 - **Exercise & Nutrition Agent** — An LLM-powered agent that queries exercise and nutrition databases through MCP servers to build personalized workout plans and meal suggestions.
+- **Rep Tracker** — Upload an exercise video and get an annotated output with skeleton overlay, real-time rep counting, and form feedback. Supports squats, pull-ups, push-ups, and deadlifts.
 - **Mobile Frontend** — A React + Vite single-page app with swipe navigation, designed for mobile-first use.
 
 ## Built With
