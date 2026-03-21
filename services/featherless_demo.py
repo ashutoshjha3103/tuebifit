@@ -82,7 +82,21 @@ class DashboardPayload(BaseModel):
     raw_assistant_text: Optional[str] = None
 
 
-def build_profile_payload(u: Profile) -> dict:
+DEFAULT_PROFILE: dict = {
+    "name": "Ash",
+    "age": 27,
+    "height_cm": 180,
+    "weight_kg": 82,
+    "activity_level": "moderately active",
+    "dietary_preferences": "non-vegetarian",
+    "session_time": "1 hr 30 mins",
+    "fitness_level": "beginner"
+}
+DEFAULT_PROFILE["bmi"] = DEFAULT_PROFILE["weight_kg"] / (DEFAULT_PROFILE["height_cm"] / 100) ** 2
+
+def build_profile_payload(u: Optional["Profile"] = None) -> dict:
+    if u is None:
+        return dict(DEFAULT_PROFILE)
     return {
         "name": u.name,
         "age": u.age,
