@@ -9,12 +9,126 @@ from typing import Literal, Optional, Any
 import requests
 from dotenv import load_dotenv
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 load_dotenv()
 
 API_URL = "https://api.featherless.ai/v1/chat/completions"
 API_KEY = os.getenv("FEATHERLESS_API_KEY")
 MODEL = os.getenv("FEATHERLESS_MODEL", "moonshotai/Kimi-K2-Thinking")
+
+TOOL_SOURCE_MAP = {
+    "search_exercises": "exercise_db",
+    "get_exercise": "exercise_db",
+    "list_exercises": "exercise_db",
+    "get_dataset_metadata": "exercise_db",
+    "search_food_by_name": "opennutrition",
+    "get_food_by_id": "opennutrition",
+    "get_foods": "opennutrition",
+    "get_food_by_ean13": "opennutrition",
+}
+
+
+class ProfilePayload(BaseModel):
+    name: str
+    age: int
+    height_cm: int
+    weight_kg: int
+    activity_level: str
+    dietary_preferences: str
+    session_time: str
+    fitness_level: str
+    bmi: float
+
+
+class ToolCallPayload(BaseModel):
+    name: str
+    arguments: Any
+
+
+class ToolBucketPayload(BaseModel):
+    calls: list[ToolCallPayload]
+    raw: list[Any]
+
+
+class ToolDataPayload(BaseModel):
+    exercise_db: ToolBucketPayload
+    opennutrition: ToolBucketPayload
+
+
+class WorkoutPlanPayload(BaseModel):
+    days: list[Any]
+    notes: list[str]
+
+
+class NutritionPlanPayload(BaseModel):
+    daily_targets: dict[str, Any]
+    meals: list[Any]
+    notes: list[str]
+
+
+class DashboardPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str
+    profile: ProfilePayload
+    summary: str
+    workout_plan: WorkoutPlanPayload
+    nutrition_plan: NutritionPlanPayload
+    recommendations: list[str]
+    warnings: list[str]
+    tool_data: ToolDataPayload
+    raw_assistant_text: Optional[str] = None
+
+
+def build_profile_payload(u: Profile) -> dict:
+    return {
+        "name": u.name,
+        "age": u.age,
+        "height_cm": u.body_profile.height,
+        "weight_kg": u.body_profile.weight,
+        "activity_level": u.body_profile.activity_level,
+        "dietary_preferences": u.body_profile.dietary_preferences,
+        "session_time": u.body_profile.session_time,
+        "fitness_level": u.body_profile.current_level,
+        "bmi": round(u.bmi(), 1),
+    }
+
+
+def empty_tool_data_payload() -> dict:
+    return {
+        "exercise_db": {"calls": [], "raw": []},
+        "opennutrition": {"calls": [], "raw": []},
+    }
+
+
+def validate_payload(payload: dict) -> dict:
+    validated = DashboardPayload.model_validate(payload)
+    return validated.model_dump(mode="json")
+
+
+def validate_or_fallback(
+    payload: dict,
+    user_query: str,
+    tool_data: dict,
+    warning: str,
+    raw_assistant_text: Optional[str] = None,
+) -> dict:
+    try:
+        return validate_payload(payload)
+    except ValidationError as exc:
+        fallback_payload = {
+            "query": user_query,
+            "profile": build_profile_payload(user),
+            "summary": "Model output failed schema validation; using fallback envelope.",
+            "workout_plan": {"days": [], "notes": []},
+            "nutrition_plan": {"daily_targets": {}, "meals": [], "notes": []},
+            "recommendations": [],
+            "warnings": [warning, f"Schema validation error: {exc.errors()[0]['msg']}"],
+            "tool_data": tool_data,
+            "raw_assistant_text": raw_assistant_text,
+        }
+        return validate_payload(fallback_payload)
 
 
 # -----------------------------
@@ -73,7 +187,12 @@ def format_user_profile(u: Profile) -> str:
 # -----------------------------
 # Featherless request helper
 # -----------------------------
-def chat_completion_request(messages, tools=None):
+def chat_completion_request(
+    messages,
+    tools=None,
+    tool_choice=None,
+    max_tokens: int = 4096,
+):
     if not API_KEY:
         raise ValueError("Missing FEATHERLESS_API_KEY in environment or .env file")
 
@@ -85,15 +204,24 @@ def chat_completion_request(messages, tools=None):
     payload = {
         "model": MODEL,
         "messages": messages,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
     }
 
     if tools is not None:
         payload["tools"] = tools
+    if tool_choice is not None:
+        payload["tool_choice"] = tool_choice
 
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=120)
-    response.raise_for_status()
-    return response.json()
+    last_error = None
+    for _ in range(2):
+        try:
+            response = requests.post(API_URL, headers=headers, json=payload, timeout=180)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as exc:
+            last_error = exc
+
+    raise RuntimeError(f"Featherless request failed after retry: {last_error}")
 
 
 # -----------------------------
@@ -170,7 +298,8 @@ async def get_dataset_metadata() -> dict:
 
 async def search_food_by_name(name: str, limit: int = 5) -> dict:
     tool = MCP_TOOL_MAP["search-food-by-name"]
-    result = await tool.ainvoke({"name": name, "limit": limit})
+    # MCP server expects "query" instead of "name".
+    result = await tool.ainvoke({"query": name, "limit": limit})
     return {"ok": True, "result": result}
 
 
@@ -192,24 +321,6 @@ async def get_food_by_ean13(ean13: str) -> dict:
     return {"ok": True, "result": result}
 
 
-async def build_push_pull_outline(goal: str, days: int, current_level: str) -> dict:
-    split = []
-    if days >= 1:
-        split.append({"day": 1, "focus": "push"})
-    if days >= 2:
-        split.append({"day": 2, "focus": "pull"})
-
-    return {
-        "ok": True,
-        "result": {
-            "goal": goal,
-            "days": days,
-            "current_level": current_level,
-            "split": split,
-        },
-    }
-
-
 AVAILABLE_FUNCTIONS = {
     "search_exercises": search_exercises,
     "get_exercise": get_exercise,
@@ -219,7 +330,6 @@ AVAILABLE_FUNCTIONS = {
     "get_food_by_id": get_food_by_id,
     "get_foods": get_foods,
     "get_food_by_ean13": get_food_by_ean13,
-    "build_push_pull_outline": build_push_pull_outline,
 }
 
 
@@ -414,35 +524,6 @@ TOOLS = [
             }
         }
     },
-    {
-        "type": "function",
-        "function": {
-            "name": "build_push_pull_outline",
-            "description": (
-                "Create a high-level push/pull routine outline before selecting exercises."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "goal": {
-                        "type": "string",
-                        "description": "Primary training goal, such as fat loss, muscle gain, strength, or general fitness"
-                    },
-                    "days": {
-                        "type": "integer",
-                        "enum": [1, 2],
-                        "description": "Number of days in the push/pull routine"
-                    },
-                    "current_level": {
-                        "type": "string",
-                        "enum": ["beginner", "intermediate", "advanced"],
-                        "description": "User fitness level"
-                    }
-                },
-                "required": ["goal", "days", "current_level"]
-            }
-        }
-    }
 ]
 
 
@@ -470,6 +551,55 @@ async def execute_function_call(function_call: dict) -> dict:
         return {"error": f"Function {function_name} failed: {str(e)}"}
 
 
+RESPONSE_SCHEMA = (
+    "Return ONLY valid JSON (no markdown fences, no extra text). Schema:\n"
+    "{\n"
+    '  "query": string,\n'
+    '  "profile": { "name","age","height_cm","weight_kg","activity_level","dietary_preferences","session_time","fitness_level","bmi" },\n'
+    '  "summary": string,\n'
+    '  "workout_plan": {\n'
+    '    "days": [ { "day": int, "focus": string, "exercises": [ { "name","id","sets","reps","rest","equipment","primary_muscles","secondary_muscles","image_urls","instructions","difficulty","category" } ] } ],\n'
+    '    "notes": [string]\n'
+    "  },\n"
+    '  "nutrition_plan": {\n'
+    '    "daily_targets": { "calories","protein_g","carbs_g","fat_g" },\n'
+    '    "meals": [ { "name","type","foods": [ { "name","amount","calories","protein_g","carbs_g","fat_g","food_id" } ], "total_calories","total_protein_g" } ],\n'
+    '    "notes": [string]\n'
+    "  },\n"
+    '  "recommendations": [string],\n'
+    '  "warnings": [string]\n'
+    "}\n"
+    "Every exercise MUST include all fields from the tool output (id, image_urls, primary_muscles, etc). "
+    "Every food MUST include macros from tool output. "
+    "Do NOT invent data; use only what the tools returned."
+)
+
+TOOL_CALL_SYSTEM_PROMPT = (
+    "You are a fitness and nutrition assistant. "
+    "You MUST call tools NOW. Do NOT write any text response. "
+    "For workout requests: call search_exercises. "
+    "For nutrition requests: call search_food_by_name. "
+    "ALWAYS call at least one exercise tool AND one food tool in this turn. "
+    "Do NOT generate a text answer -- ONLY make tool calls."
+)
+
+FORMAT_SYSTEM_PROMPT = (
+    "You have all the tool results above. Now produce the final answer. "
+    "Be concise: limit to min 1 exercise session and max 2 exercise sessions per day, 3-4 meals, short instructions (1 sentence each). "
+    "Do NOT repeat raw tool data verbatim -- summarize into the schema fields. "
+    f"{RESPONSE_SCHEMA}"
+)
+
+MAX_TOOL_ROUNDS = 3
+MAX_TOOL_RESULT_CHARS = 3000
+
+
+def truncate_tool_content(content: str) -> str:
+    if len(content) <= MAX_TOOL_RESULT_CHARS:
+        return content
+    return content[:MAX_TOOL_RESULT_CHARS] + '... [truncated]"}'
+
+
 # -----------------------------
 # Main conversation flow
 # -----------------------------
@@ -484,50 +614,118 @@ async def run_conversation(user_query: str):
         print("Tool names:", [tool.name for tool in mcp_tools])
 
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a fitness and nutrition assistant. "
-                    "Use tools whenever they improve accuracy. "
-                    "For workout planning, use exercise tools first, then fetch specific exercise details. "
-                    "For meals and macros, use nutrition tools. "
-                    "When building a plan, combine exercise and food results into one clear answer. "
-                    "Include exercise image links when available."
-                ),
-            },
+            {"role": "system", "content": TOOL_CALL_SYSTEM_PROMPT},
             {
                 "role": "user",
                 "content": f"{format_user_profile(user)}. Request: {user_query}",
             },
         ]
 
-        first_response = chat_completion_request(messages, tools=TOOLS)
-        response_message = first_response["choices"][0]["message"]
-        tool_calls = response_message.get("tool_calls")
+        collected_tool_data = empty_tool_data_payload()
 
-        if tool_calls:
-            messages.append(response_message)
+        # --- Phase 1: multi-round tool calling ---
+        for round_num in range(MAX_TOOL_ROUNDS):
+            resp = chat_completion_request(
+                messages,
+                tools=TOOLS,
+                tool_choice="auto",
+            )
+            msg = resp["choices"][0]["message"]
+            tool_calls = msg.get("tool_calls")
 
-            for tool_call in tool_calls:
-                function_response = await execute_function_call(tool_call["function"])
+            if not tool_calls:
+                break
 
+            messages.append(msg)
+
+            for tc in tool_calls:
+                fn_name = tc["function"]["name"]
+                fn_args = tc["function"].get("arguments", "{}")
+                print(f"  [round {round_num+1}] calling {fn_name}({fn_args})")
+
+                fn_result = await execute_function_call(tc["function"])
+
+                source = TOOL_SOURCE_MAP.get(fn_name, "local_planner")
+                collected_tool_data[source]["calls"].append(
+                    {"name": fn_name, "arguments": fn_args}
+                )
+                collected_tool_data[source]["raw"].append(fn_result)
+
+                full_content = json.dumps(fn_result)
                 messages.append(
                     {
-                        "tool_call_id": tool_call["id"],
+                        "tool_call_id": tc["id"],
                         "role": "tool",
-                        "name": tool_call["function"]["name"],
-                        "content": json.dumps(function_response),
+                        "name": fn_name,
+                        "content": truncate_tool_content(full_content),
                     }
                 )
 
-            second_response = chat_completion_request(messages)
-            final_message = second_response["choices"][0]["message"]["content"]
+        has_exercise_data = len(collected_tool_data["exercise_db"]["raw"]) > 0
+        has_nutrition_data = len(collected_tool_data["opennutrition"]["raw"]) > 0
+        print(f"Tool data collected: exercises={has_exercise_data}, nutrition={has_nutrition_data}")
 
-            print("\nAssistant:\n")
-            print(final_message)
-        else:
-            print("\nAssistant:\n")
-            print(response_message.get("content", ""))
+        # --- Phase 2: fresh compact context for the formatting call ---
+        def summarise_tool_results(tool_data: dict) -> str:
+            parts = []
+            for source, bucket in tool_data.items():
+                for i, raw in enumerate(bucket["raw"]):
+                    call_info = bucket["calls"][i] if i < len(bucket["calls"]) else {}
+                    content = json.dumps(raw)
+                    content = truncate_tool_content(content)
+                    parts.append(f"[{source}] {call_info.get('name','?')}: {content}")
+            return "\n\n".join(parts)
+
+        format_messages = [
+            {"role": "system", "content": FORMAT_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"User profile: {format_user_profile(user)}\n"
+                    f"User request: {user_query}\n\n"
+                    f"Tool results:\n{summarise_tool_results(collected_tool_data)}"
+                ),
+            },
+        ]
+
+        format_resp = chat_completion_request(format_messages, max_tokens=4096)
+        raw_text = format_resp["choices"][0]["message"]["content"]
+
+        # Strip markdown code fences if model wrapped the JSON
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```"):
+            first_nl = cleaned.index("\n")
+            cleaned = cleaned[first_nl + 1 :]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[: -3]
+        cleaned = cleaned.strip()
+
+        print("\nAssistant:\n")
+        try:
+            parsed = json.loads(cleaned)
+            parsed["tool_data"] = collected_tool_data
+            validated = validate_or_fallback(
+                parsed,
+                user_query=user_query,
+                tool_data=collected_tool_data,
+                warning="Model output failed schema validation.",
+                raw_assistant_text=cleaned,
+            )
+            print(json.dumps(validated, indent=2))
+        except json.JSONDecodeError:
+            fallback_payload = {
+                "query": user_query,
+                "profile": build_profile_payload(user),
+                "summary": "LLM returned non-JSON output; using fallback envelope.",
+                "workout_plan": {"days": [], "notes": []},
+                "nutrition_plan": {"daily_targets": {}, "meals": [], "notes": []},
+                "recommendations": [],
+                "warnings": ["Model output was not valid JSON."],
+                "tool_data": collected_tool_data,
+                "raw_assistant_text": raw_text,
+            }
+            validated = validate_payload(fallback_payload)
+            print(json.dumps(validated, indent=2))
 
     finally:
         if hasattr(client, "close"):
