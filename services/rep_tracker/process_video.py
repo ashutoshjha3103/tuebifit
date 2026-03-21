@@ -51,7 +51,8 @@ EXERCISES = {
 
 
 def process_video(input_path: str, output_path: str,
-                  exercise: str = "squat", target_reps: int = 15):
+                  exercise: str = "squat", target_reps: int = 15,
+                  use_gpu: bool = False):
     cfg = EXERCISES[exercise]
 
     cap = cv2.VideoCapture(input_path)
@@ -75,7 +76,7 @@ def process_video(input_path: str, output_path: str,
         print("Error: VideoWriter failed to open")
         sys.exit(1)
 
-    estimator = PoseEstimator(static_image_mode=False)
+    estimator = PoseEstimator(static_image_mode=False, use_gpu=use_gpu)
     detector = cfg["detector_cls"]()
     # Scale hysteresis thresholds for low-fps inputs (GIFs, etc.)
     fps_scale = max(0.1, fps / 30.0)
@@ -158,10 +159,11 @@ if __name__ == "__main__":
     parser.add_argument("--exercise", "-e", choices=EXERCISES.keys(), default="squat")
     parser.add_argument("--output", "-o", default=None, help="Output video path (default: annotated_<input>.mp4)")
     parser.add_argument("--target-reps", type=int, default=15)
+    parser.add_argument("--gpu", action="store_true", help="Use GPU delegate if available")
     args = parser.parse_args()
 
     if args.output is None:
         base = os.path.splitext(os.path.basename(args.input))[0]
         args.output = f"annotated_{base}.mp4"
 
-    process_video(args.input, args.output, args.exercise, args.target_reps)
+    process_video(args.input, args.output, args.exercise, args.target_reps, args.gpu)

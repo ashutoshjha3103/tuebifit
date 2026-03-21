@@ -27,10 +27,15 @@ class PoseEstimator:
         config: Dict[str, Any] = None,
         static_image_mode: bool = True,
         model_path: str = _DEFAULT_MODEL,
+        use_gpu: bool = False,
     ):
         mode = RunningMode.IMAGE if static_image_mode else RunningMode.VIDEO
+        delegate = self._resolve_delegate(model_path, mode, use_gpu)
         options = PoseLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=model_path),
+            base_options=BaseOptions(
+                model_asset_path=model_path,
+                delegate=delegate,
+            ),
             running_mode=mode,
             num_poses=1,
             min_pose_detection_confidence=0.5,
@@ -39,7 +44,31 @@ class PoseEstimator:
         )
         self._landmarker = PoseLandmarker.create_from_options(options)
         self._mode = mode
+        self._delegate = delegate
         self._frame_ts_ms = 0
+
+    @staticmethod
+    def _resolve_delegate(
+        model_path: str, mode: RunningMode, use_gpu: bool
+    ) -> BaseOptions.Delegate:
+        if not use_gpu:
+            return BaseOptions.Delegate.CPU
+        try:
+            probe = PoseLandmarkerOptions(
+                base_options=BaseOptions(
+                    model_asset_path=model_path,
+                    delegate=BaseOptions.Delegate.GPU,
+                ),
+                running_mode=mode,
+                num_poses=1,
+            )
+            lm = PoseLandmarker.create_from_options(probe)
+            lm.close()
+            print("GPU delegate available — using GPU")
+            return BaseOptions.Delegate.GPU
+        except Exception:
+            print("GPU delegate unavailable — falling back to CPU")
+            return BaseOptions.Delegate.CPU
 
     def _landmarks_to_keypoints(self, landmarks, w: int, h: int) -> np.ndarray:
         """Convert normalized PoseLandmarker landmarks to absolute pixel coords."""
