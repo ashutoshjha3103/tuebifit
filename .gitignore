@@ -218,3 +218,7 @@ __marimo__/
 
 *.pt
 *.pth
+
+# Force-include everything under assets/
+!assets/
+!assets/**
