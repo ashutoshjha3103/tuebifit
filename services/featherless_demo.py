@@ -18,6 +18,19 @@ API_KEY = os.getenv("FEATHERLESS_API_KEY")
 MODEL = os.getenv("FEATHERLESS_MODEL", "moonshotai/Kimi-K2-Thinking")
 FORMAT_MODEL = os.getenv("FEATHERLESS_FORMAT_MODEL", "Qwen/Qwen3-32B")
 
+_GYM_BRO_ROOT = os.getenv(
+    "GYM_BRO_ROOT",
+    os.path.join(os.path.expanduser("~"), "personal_projects", "gym_bro"),
+)
+MCP_OPENNUTRITION_PATH = os.getenv(
+    "MCP_OPENNUTRITION_PATH",
+    os.path.join(_GYM_BRO_ROOT, "mcp-opennutrition", "build", "index.js"),
+)
+MCP_EXERCISEDB_PATH = os.getenv(
+    "MCP_EXERCISEDB_PATH",
+    os.path.join(_GYM_BRO_ROOT, "mcp-freeexercisedb", "free-exercise-mcp", "build", "index.js"),
+)
+
 TOOL_SOURCE_MAP = {
     "search_exercises": "exercise_db",
     "get_exercise": "exercise_db",
@@ -252,16 +265,12 @@ async def get_mcp_tools():
             "opennutrition": {
                 "transport": "stdio",
                 "command": "node",
-                "args": [
-                    r"C:\Users\Sarthak\personal_projects\gym_bro\mcp-opennutrition\build\index.js"
-                ],
+                "args": [MCP_OPENNUTRITION_PATH],
             },
             "exercise_db": {
                 "transport": "stdio",
                 "command": "node",
-                "args": [
-                    r"C:\Users\Sarthak\personal_projects\gym_bro\mcp-freeexercisedb\free-exercise-mcp\build\index.js"
-                ],
+                "args": [MCP_EXERCISEDB_PATH],
             },
         }
     )
