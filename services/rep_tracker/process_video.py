@@ -76,7 +76,7 @@ def process_video(input_path: str, output_path: str,
         sys.exit(1)
 
     estimator = PoseEstimator(static_image_mode=False)
-    detector = cfg["detector_cls"]("config.json")
+    detector = cfg["detector_cls"]()
     # Scale hysteresis thresholds for low-fps inputs (GIFs, etc.)
     fps_scale = max(0.1, fps / 30.0)
     entry = max(1, int(cfg["entry_frames"] * fps_scale))

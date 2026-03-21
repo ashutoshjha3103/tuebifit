@@ -1,4 +1,5 @@
 import math
+import os
 
 import cv2
 import json
@@ -6,11 +7,14 @@ import numpy as np
 from typing import Dict, Any, Tuple
 from utils import get_midpoint, calculate_vertical_displacement, calculate_angle
 
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT_CONFIG = os.path.join(_SCRIPT_DIR, "config.json")
+
 class BaseExerciseDetector:
     """
     Foundational class for rendering exercise keypoints.
     """
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
         with open(config_path, 'r') as f:
             self.config = json.load(f)
         self.kp_map = self.config["keypoints"]
@@ -55,7 +59,7 @@ class SquatDetector(BaseExerciseDetector):
     Evaluates squat form using a view-aware blended logic system.
     Dynamically weighs joint angles vs. vertical displacement based on camera perspective.
     """
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
         super().__init__(config_path)
 
     def evaluate_form(self, keypoints: np.ndarray) -> Dict[str, Any]:
@@ -141,7 +145,7 @@ class PullUpDetector(BaseExerciseDetector):
     REST_STATE = "Hanging"
     ACTIVE_STATE = "Pulling"
 
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
         super().__init__(config_path)
 
     def _avg_elbow_angle(self, keypoints: np.ndarray) -> float:
@@ -254,7 +258,7 @@ class PushUpDetector(BaseExerciseDetector):
     REST_STATE = "Up"
     ACTIVE_STATE = "Down"
 
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
         super().__init__(config_path)
 
     def evaluate_form(self, keypoints: np.ndarray) -> Dict[str, Any]:
@@ -340,7 +344,7 @@ class DeadliftDetector(BaseExerciseDetector):
     REST_STATE = "Standing"
     ACTIVE_STATE = "Lifting"
 
-    def __init__(self, config_path: str = "config.json"):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG):
         super().__init__(config_path)
 
     def evaluate_form(self, keypoints: np.ndarray) -> Dict[str, Any]:
