@@ -1,0 +1,96 @@
+# CircleCI configuration
+version: 2.1
+
+# Aliases
+aliases:
+  # Caching
+  - &restore-npm-cache
+    keys:
+      - dependency-cache-{{ checksum "package-lock.json" }}
+  - &save-npm-cache
+    key: dependency-cache-{{ checksum "package-lock.json" }}
+    paths:
+      - node_modules
+
+# Defaults
+defaults: &defaults
+  working_directory: ~/exercises.json
+
+js_defaults: &js_defaults
+  <<: *defaults
+  docker:
+    - image: circleci/node:14.5.0-buster
+
+jobs:
+  prepare_environment:
+    <<: *js_defaults
+    steps:
+      - checkout
+      - restore_cache: *restore-npm-cache
+      - run:
+          name: Installing dependencies
+          command: npm install
+      - save_cache: *save-npm-cache
+      - persist_to_workspace:
+          root: .
+          paths: .
+  lint:
+    <<: *js_defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Running Linter
+          command: npm run lint
+  tests:
+    <<: *js_defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Running Unit Tests
+          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit --coverage
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./test-results/jest
+            JEST_JUNIT_OUTPUT_NAME: results.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+      - store_artifacts:
+          path: .jest/coverage
+  postgresql-tests:
+    <<: *defaults
+    docker:
+      - image: circleci/node:14.5.0-buster
+      - image: circleci/postgres:11.4
+        environment:
+          POSTGRES_USER: wrkout
+          POSTGRES_DB: exercises-db
+          POSTGRES_HOST_AUTH_METHOD: trust
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install Postgresql-client
+          command: sudo apt update && sudo apt install -y postgresql-client || true
+      - run:
+          name: Generate exercises-psql.sql
+          command: npm run build:psql
+      - run:
+          name: Insert into database
+          command: psql -h localhost -U wrkout -d exercises-db -f exercises-psql.sql
+
+workflows:
+  test:
+    jobs:
+      - prepare_environment
+      - lint:
+          requires:
+            - prepare_environment
+      - tests:
+          requires:
+            - prepare_environment
+      - postgresql-tests:
+          requires:
+            - prepare_environment
