@@ -22,11 +22,11 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _SERVICES_ROOT = os.getenv("SERVICES_ROOT", os.path.join(_REPO_ROOT, "services"))
 MCP_OPENNUTRITION_PATH = os.getenv(
     "MCP_OPENNUTRITION_PATH",
-    os.path.join(_SERVICES_ROOT, "mcp-opennutrition", "build", "index.js"),
+    os.path.join(_SERVICES_ROOT, "nutrition_mcp", "mcp-opennutrition", "build", "index.js"),
 )
 MCP_EXERCISEDB_PATH = os.getenv(
     "MCP_EXERCISEDB_PATH",
-    os.path.join(_SERVICES_ROOT, "mcp-freeexercisedb", "free-exercise-mcp", "build", "index.js"),
+    os.path.join(_SERVICES_ROOT, "excercise_mcp", "mcp-freeexercisedb", "free-exercise-mcp", "build", "index.js"),
 )
 
 TOOL_SOURCE_MAP = {
