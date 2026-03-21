@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react'
 import { useSwipeable } from 'react-swipeable'
-import { Dumbbell, UtensilsCrossed, User } from 'lucide-react'
+import { Dumbbell, UtensilsCrossed, User, Activity } from 'lucide-react'
 import ExercisesPage from '../pages/ExercisesPage'
+import RepCountPage from '../pages/RepCountPage'
 import DietPage from '../pages/DietPage'
 import ProfilePage from '../pages/ProfilePage'
 
 const TABS = [
   { key: 'exercises', label: 'Workouts', icon: Dumbbell },
   { key: 'diet', label: 'Nutrition', icon: UtensilsCrossed },
+  { key: 'repcount', label: 'RepCount', icon: Activity },
   { key: 'profile', label: 'Profile', icon: User },
 ]
 
@@ -46,7 +48,7 @@ export default function MainLayout() {
     preventScrollOnSwipe: false,
   })
 
-  const pages = [<ExercisesPage key="ex" />, <DietPage key="diet" />, <ProfilePage key="prof" />]
+  const pages = [<ExercisesPage key="ex" />, <DietPage key="diet" />, <RepCountPage key="rep" />, <ProfilePage key="prof" />]
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
