@@ -1,0 +1,29 @@
+{
+  "name": "free-exercise-db-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the yuhonas/free-exercise-db exercise dataset",
+  "type": "module",
+  "bin": {
+    "free-exercise-db-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod 755 build/index.js",
+    "dev": "tsx src/index.ts",
+    "start": "node build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
