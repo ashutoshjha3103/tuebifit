@@ -1,21 +1,24 @@
 # tuebifit/Makefile
 
-.PHONY: run-rep-tracker build-rep-tracker
+.PHONY: run-rep-tracker run-rep-server build-rep-tracker docker-run-rep-tracker run-frontend run-all
 
-# Runs the python script locally using your active venv
+# CLI mode: process test images
 run-rep-tracker:
 	cd services/rep_tracker && python main.py
 
-# Builds the Docker container for the rep tracker
+# Server mode: start the FastAPI + WebSocket server on port 8000
+run-rep-server:
+	cd services/rep_tracker && uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+
+# Docker
 build-rep-tracker:
 	cd services/rep_tracker && docker build -t tuebifit-rep-tracker .
 
-# Runs the built Docker container locally
 docker-run-rep-tracker:
-	docker run --rm -v $(PWD)/services/rep_tracker:/app/data tuebifit-rep-tracker
+	docker run --rm -p 8000:8000 tuebifit-rep-tracker
 
-# Future commands for your other services
+# Frontend
 run-frontend:
 	cd frontend && npm run dev
 
-run-all: run-frontend run-rep-tracker
+run-all: run-frontend run-rep-server
