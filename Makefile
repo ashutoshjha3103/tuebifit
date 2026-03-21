@@ -1,7 +1,25 @@
 # tuebifit/Makefile
 
+VENV_DIR   := .venv
+PYTHON     := $(VENV_DIR)/bin/python
+PIP        := $(VENV_DIR)/bin/pip
+
 .PHONY: run-rep-tracker run-rep-server build-rep-tracker docker-run-rep-tracker \
-        run-frontend run-all build-nutrition-mcp run-exercise-nutrition-mcp
+        run-frontend run-all build-nutrition-mcp run-exercise-nutrition-mcp \
+        setup-venv clean-venv
+
+# ── Virtual environment ─────────────────────────────────────────────
+setup-venv: $(VENV_DIR)/.installed
+
+$(VENV_DIR)/.installed: services/requirements.txt services/rep_tracker/requirements.txt
+	python3 -m venv $(VENV_DIR)
+	$(PIP) install --upgrade pip
+	$(PIP) install -r services/requirements.txt
+	$(PIP) install -r services/rep_tracker/requirements.txt
+	touch $@
+
+clean-venv:
+	rm -rf $(VENV_DIR)
 
 # ── MCP servers ─────────────────────────────────────────────────────
 NUTRITION_MCP_DIR := services/nutrition_mcp/mcp-opennutrition
@@ -16,25 +34,25 @@ EXERCISE    ?= squat
 TARGET_REPS ?= 15
 OUTPUT      ?=
 
-run-rep-tracker:
+run-rep-tracker: setup-venv
 ifndef VIDEO
 	$(error VIDEO is required. Usage: make run-rep-tracker VIDEO=path/to/video.mp4)
 endif
-	python services/rep_tracker/process_video.py "$(VIDEO)" \
+	$(PYTHON) services/rep_tracker/process_video.py "$(VIDEO)" \
 		--exercise $(EXERCISE) \
 		--target-reps $(TARGET_REPS) \
 		$(if $(OUTPUT),--output "$(OUTPUT)",)
 
 # Server mode: start the FastAPI + WebSocket server on port 8000
-run-rep-server:
-	cd services/rep_tracker && uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+run-rep-server: setup-venv
+	cd services/rep_tracker && ../../$(VENV_DIR)/bin/uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 
 # ── Exercise + Nutrition MCP agent ──────────────────────────────────
 # Usage: make run-exercise-nutrition-mcp [PROMPT="your question here"]
 PROMPT ?=
 
-run-exercise-nutrition-mcp:
-	python services/featherless_demo.py $(if $(PROMPT),"$(PROMPT)",)
+run-exercise-nutrition-mcp: setup-venv
+	$(PYTHON) services/featherless_demo.py $(if $(PROMPT),"$(PROMPT)",)
 
 # ── Docker ──────────────────────────────────────────────────────────
 build-rep-tracker:
