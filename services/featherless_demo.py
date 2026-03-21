@@ -18,17 +18,15 @@ API_KEY = os.getenv("FEATHERLESS_API_KEY")
 MODEL = os.getenv("FEATHERLESS_MODEL", "moonshotai/Kimi-K2-Thinking")
 FORMAT_MODEL = os.getenv("FEATHERLESS_FORMAT_MODEL", "Qwen/Qwen3-32B")
 
-_GYM_BRO_ROOT = os.getenv(
-    "GYM_BRO_ROOT",
-    os.path.join(os.path.expanduser("~"), "personal_projects", "gym_bro"),
-)
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_SERVICES_ROOT = os.getenv("SERVICES_ROOT", os.path.join(_REPO_ROOT, "services"))
 MCP_OPENNUTRITION_PATH = os.getenv(
     "MCP_OPENNUTRITION_PATH",
-    os.path.join(_GYM_BRO_ROOT, "mcp-opennutrition", "build", "index.js"),
+    os.path.join(_SERVICES_ROOT, "mcp-opennutrition", "build", "index.js"),
 )
 MCP_EXERCISEDB_PATH = os.getenv(
     "MCP_EXERCISEDB_PATH",
-    os.path.join(_GYM_BRO_ROOT, "mcp-freeexercisedb", "free-exercise-mcp", "build", "index.js"),
+    os.path.join(_SERVICES_ROOT, "mcp-freeexercisedb", "free-exercise-mcp", "build", "index.js"),
 )
 
 TOOL_SOURCE_MAP = {
