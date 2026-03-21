@@ -3,7 +3,8 @@ Process a video file through the full rep-tracking pipeline and produce
 an annotated output video with skeleton overlay, rep count, and messages.
 
 Usage:
-    python process_video.py Squat_-_exercise_demonstration_video.webm
+    python process_video.py Squat_video.webm
+    python process_video.py Pullup_video.webm --exercise pullup --target-reps 3
     python process_video.py input.mp4 --target-reps 10 --output out.mp4
 """
 import argparse
@@ -12,14 +13,29 @@ import sys
 import time
 
 import cv2
-import numpy as np
 
 from inference import PoseEstimator
-from detectors import SquatDetector
+from detectors import SquatDetector, PullUpDetector
 from state_machine import RepCounter
 
+EXERCISES = {
+    "squat": {
+        "detector_cls": SquatDetector,
+        "rest_state": "Standing",
+        "active_state": "Squatting",
+    },
+    "pullup": {
+        "detector_cls": PullUpDetector,
+        "rest_state": PullUpDetector.REST_STATE,
+        "active_state": PullUpDetector.ACTIVE_STATE,
+    },
+}
 
-def process_video(input_path: str, output_path: str, target_reps: int = 15):
+
+def process_video(input_path: str, output_path: str,
+                  exercise: str = "squat", target_reps: int = 15):
+    cfg = EXERCISES[exercise]
+
     cap = cv2.VideoCapture(input_path)
     if not cap.isOpened():
         print(f"Error: could not open {input_path}")
@@ -30,10 +46,10 @@ def process_video(input_path: str, output_path: str, target_reps: int = 15):
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+    print(f"Exercise: {exercise}")
     print(f"Input : {input_path}  ({w}x{h} @ {fps:.1f} fps, ~{total} frames)")
     print(f"Output: {output_path}")
 
-    # Use MJPG in AVI as intermediate (universally supported by headless OpenCV)
     tmp_avi = output_path.rsplit(".", 1)[0] + "_tmp.avi"
     fourcc = cv2.VideoWriter_fourcc(*"MJPG")
     writer = cv2.VideoWriter(tmp_avi, fourcc, fps, (w, h))
@@ -42,8 +58,12 @@ def process_video(input_path: str, output_path: str, target_reps: int = 15):
         sys.exit(1)
 
     estimator = PoseEstimator(static_image_mode=False)
-    detector = SquatDetector("config.json")
-    counter = RepCounter(target_reps=target_reps)
+    detector = cfg["detector_cls"]("config.json")
+    counter = RepCounter(
+        target_reps=target_reps,
+        rest_state=cfg["rest_state"],
+        active_state=cfg["active_state"],
+    )
 
     frame_idx = 0
     skipped = 0
@@ -69,7 +89,6 @@ def process_video(input_path: str, output_path: str, target_reps: int = 15):
 
             annotated = detector.draw_skeleton(frame, keypoints, sx, sy, status_line)
 
-            # Draw motivational message near top
             cv2.putText(annotated, msg_line, (30, 50),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 5, cv2.LINE_AA)
             cv2.putText(annotated, msg_line, (30, 50),
@@ -95,8 +114,7 @@ def process_video(input_path: str, output_path: str, target_reps: int = 15):
           f"({frame_idx/elapsed:.1f} fps), {skipped} skipped (no pose)")
     print(f"Final rep count: {counter.reps_completed}")
 
-    # Convert MJPG AVI → MP4 with ffmpeg for smaller file & wider compatibility
-    print(f"Converting to MP4...")
+    print("Converting to MP4...")
     ret = os.system(
         f'ffmpeg -y -loglevel warning -i "{tmp_avi}" '
         f'-c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p "{output_path}"'
@@ -112,6 +130,7 @@ def process_video(input_path: str, output_path: str, target_reps: int = 15):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process video through rep-tracker pipeline")
     parser.add_argument("input", help="Path to input video file")
+    parser.add_argument("--exercise", "-e", choices=EXERCISES.keys(), default="squat")
     parser.add_argument("--output", "-o", default=None, help="Output video path (default: annotated_<input>.mp4)")
     parser.add_argument("--target-reps", type=int, default=15)
     args = parser.parse_args()
@@ -120,4 +139,4 @@ if __name__ == "__main__":
         base = os.path.splitext(os.path.basename(args.input))[0]
         args.output = f"annotated_{base}.mp4"
 
-    process_video(args.input, args.output, args.target_reps)
+    process_video(args.input, args.output, args.exercise, args.target_reps)

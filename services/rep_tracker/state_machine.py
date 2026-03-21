@@ -4,22 +4,27 @@ class RepCounter:
     and provide dynamic user feedback.
 
     Uses asymmetric hysteresis to reject noisy per-frame detections:
-      - entry_frames: consecutive "Squatting" frames needed to confirm entry
-      - exit_frames:  consecutive "Standing" frames needed to confirm rep completion
+      - entry_frames: consecutive *active* frames needed to confirm entry
+      - exit_frames:  consecutive *rest* frames needed to confirm rep completion
 
-    At 30 fps the defaults (entry=3, exit=15) correspond to ~100 ms and ~500 ms,
-    which rejects single-frame flickers and brief mid-squat pauses while still
-    responding quickly to real movement.
+    State names are configurable so the same counter works for any exercise
+    (squats, pull-ups, push-ups, etc.).
+
+    At 30 fps the defaults (entry=3, exit=15) correspond to ~100 ms and ~500 ms.
     """
 
     def __init__(self, target_reps: int = 15,
+                 rest_state: str = "Standing", active_state: str = "Squatting",
                  entry_frames: int = 3, exit_frames: int = 15):
         self.target_reps = target_reps
+        self.rest_state = rest_state
+        self.active_state = active_state
+        self._valid_states = {rest_state, active_state}
         self.entry_frames = entry_frames
         self.exit_frames = exit_frames
 
         self.reps_completed = 0
-        self.confirmed_state = "Standing"
+        self.confirmed_state = rest_state
         self.message = "Let's go!"
 
         self._pending_state: str | None = None
@@ -30,11 +35,10 @@ class RepCounter:
         Feed in this frame's raw detector status.
         Returns {"reps": int, "message": str, "confirmed_state": str}.
         """
-        if detected_status not in ("Standing", "Squatting"):
+        if detected_status not in self._valid_states:
             return self._result()
 
         if detected_status != self.confirmed_state:
-            # Accumulate evidence for a state change
             if detected_status == self._pending_state:
                 self._pending_count += 1
             else:
@@ -42,7 +46,7 @@ class RepCounter:
                 self._pending_count = 1
 
             threshold = (self.entry_frames
-                         if self.confirmed_state == "Standing"
+                         if self.confirmed_state == self.rest_state
                          else self.exit_frames)
 
             if self._pending_count >= threshold:
@@ -51,11 +55,10 @@ class RepCounter:
                 self._pending_state = None
                 self._pending_count = 0
 
-                if old == "Squatting" and self.confirmed_state == "Standing":
+                if old == self.active_state and self.confirmed_state == self.rest_state:
                     self.reps_completed += 1
                     self._update_message()
         else:
-            # Current frame agrees with confirmed state — reset pending
             self._pending_state = None
             self._pending_count = 0
 
