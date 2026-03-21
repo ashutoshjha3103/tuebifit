@@ -1,49 +1,70 @@
+"""
+CLI entry point for the exercise tracking microservice.
+
+Usage:
+  python main.py                        # process default test images
+  python main.py img1.jpg img2.jpg      # process specific images
+  python main.py --target-reps 10       # set a rep target for the sequence
+"""
+import argparse
+import os
+import sys
+
+import cv2
+
 from inference import PoseEstimator
 from detectors import SquatDetector
 from state_machine import RepCounter
-import cv2
-import os
+
+
+def process_images(image_paths: list[str], target_reps: int = 15):
+    config_path = "config.json"
+    detector = SquatDetector(config_path)
+    estimator = PoseEstimator(static_image_mode=True)
+    counter = RepCounter(target_reps=target_reps)
+
+    for image_path in image_paths:
+        print(f"\nProcessing {image_path}...")
+
+        if not os.path.exists(image_path):
+            print(f"Error: {image_path} not found.")
+            continue
+
+        try:
+            img, keypoints, sx, sy = estimator.extract_keypoints(image_path)
+        except Exception as e:
+            print(f"Failed to process image: {e}")
+            continue
+
+        metrics = detector.evaluate_form(keypoints)
+        rep_state = counter.update(metrics["status"])
+
+        display_text = (
+            f"[{metrics['view']}] {metrics['status']} | "
+            f"Reps: {rep_state['reps']} | {rep_state['message']}"
+        )
+        annotated = detector.draw_skeleton(img, keypoints, sx, sy, display_text)
+
+        filename = os.path.basename(image_path)
+        output_filename = f"annotated_{filename}"
+        cv2.imwrite(output_filename, annotated)
+
+        print(f"  View: {metrics['view']}  Status: {metrics['status']}")
+        print(f"  Depth ratio: {metrics['depth_ratio']:.2f}  Knee angle: {metrics['knee_angle']:.0f}")
+        print(f"  Reps: {rep_state['reps']}  {rep_state['message']}")
+        print(f"  Saved: {output_filename}")
+
+    estimator.close()
+
 
 def main():
-    detector = SquatDetector("config.json")
-    estimator = PoseEstimator()
-    rep_counter = RepCounter(target_reps=3) # Small target for testing
+    parser = argparse.ArgumentParser(description="TuebiFit Rep Tracker CLI")
+    parser.add_argument("images", nargs="*", default=["Barbel_full_squat_0.jpg", "Barbel_full_squat_1.jpg"])
+    parser.add_argument("--target-reps", type=int, default=15)
+    args = parser.parse_args()
 
-    # Simulating a video sequence: Standing -> Squatting -> Standing
-    video_sequence = [
-        "Barbel_full_squat_0.jpg", # Frame 1: Standing
-        "Barbel_full_squat_1.jpg", # Frame 2: Squatting
-        "Barbel_full_squat_0.jpg"  # Frame 3: Standing (Completes the rep!)
-    ]
+    process_images(args.images, target_reps=args.target_reps)
 
-    for i, img_path in enumerate(video_sequence):
-        print(f"\n--- Frame {i+1}: Processing {img_path} ---")
-        
-        # 1. Inference
-        img, raw_keypoints, scale_x, scale_y = estimator.extract_keypoints(img_path)
-        
-        # 2. Evaluate Form
-        metrics = detector.evaluate_form(raw_keypoints)
-        status = metrics['status']
-        
-        # 3. Update State Machine
-        state_data = rep_counter.update(status)
-        reps = state_data["reps"]
-        msg = state_data["message"]
-        
-        # 4. Draw Overlay
-        display_text = f"[{metrics['view']}] {status} | Ang: {metrics['knee_angle']:.0f}"
-        ui_text = f"Reps: {reps} | {msg}"
-        
-        annotated_img = detector.draw_skeleton(img, raw_keypoints, scale_x, scale_y, display_text)
-        
-        # Add the Rep Counter UI to the top left
-        cv2.putText(annotated_img, ui_text, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3, cv2.LINE_AA)
-        
-        # Save output
-        output_filename = f"frame_{i+1}_output.jpg"
-        cv2.imwrite(output_filename, annotated_img)
-        print(f"Result -> Status: {status} | Reps: {reps} | Msg: {msg}")
 
 if __name__ == "__main__":
     main()

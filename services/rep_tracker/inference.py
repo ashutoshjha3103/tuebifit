@@ -1,46 +1,83 @@
+import os
 import cv2
 import numpy as np
-from ultralytics import YOLO
+import mediapipe as mp
+
+from mediapipe.tasks.python import BaseOptions
+from mediapipe.tasks.python.vision import (
+    PoseLandmarker,
+    PoseLandmarkerOptions,
+    RunningMode,
+)
+
 from typing import Tuple, Dict, Any
+
+_DEFAULT_MODEL = os.path.join(os.path.dirname(__file__), "pose_landmarker_heavy.task")
+
 
 class PoseEstimator:
     """
-    A generic pose estimation handler using YOLOv8-Pose.
-    Automatically handles bounding boxes and returns absolute pixel coordinates.
+    Pose estimation handler using Google's MediaPipe PoseLandmarker (Tasks API).
+    Supports IMAGE mode (single images) and VIDEO mode (sequential frames with
+    temporal tracking).
     """
 
-    def __init__(self, config: Dict[str, Any] = None):
-        """
-        Initializes the PoseEstimator. Automatically downloads the model 
-        weights (yolov8n-pose.pt) on the first run.
-        """
-        self.model = YOLO('yolov8n-pose.pt')
+    def __init__(
+        self,
+        config: Dict[str, Any] = None,
+        static_image_mode: bool = True,
+        model_path: str = _DEFAULT_MODEL,
+    ):
+        mode = RunningMode.IMAGE if static_image_mode else RunningMode.VIDEO
+        options = PoseLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=model_path),
+            running_mode=mode,
+            num_poses=1,
+            min_pose_detection_confidence=0.5,
+            min_pose_presence_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+        self._landmarker = PoseLandmarker.create_from_options(options)
+        self._mode = mode
+        self._frame_ts_ms = 0
+
+    def _landmarks_to_keypoints(self, landmarks, w: int, h: int) -> np.ndarray:
+        """Convert normalized PoseLandmarker landmarks to absolute pixel coords."""
+        raw_keypoints = np.zeros((33, 2))
+        for i, lm in enumerate(landmarks):
+            if lm.visibility > 0.4:
+                raw_keypoints[i] = [int(lm.x * w), int(lm.y * h)]
+        return raw_keypoints
 
     def extract_keypoints(self, image_path: str) -> Tuple[np.ndarray, np.ndarray, float, float]:
-        """
-        Runs inference to extract COCO keypoints from an image.
-
-        Args:
-            image_path (str): The file path to the target image.
-
-        Returns:
-            Tuple: 
-                - img: The raw OpenCV image.
-                - raw_keypoints: A [17, 2] numpy array of exact (x, y) pixel coordinates.
-                - scale_x, scale_y: Set to 1.0 since YOLO outputs absolute coordinates natively.
-        """
+        """Extract 33 BlazePose keypoints from an image file on disk."""
         img = cv2.imread(image_path)
         if img is None:
             raise ValueError(f"Could not load image at {image_path}")
-        
-        # Run YOLO inference quietly
-        results = self.model(img, verbose=False)
-        
-        # Ensure a person was detected
-        if len(results[0].keypoints) == 0:
-            raise ValueError("No person detected in the image.")
-        
-        # Extract the keypoints for the first detected person
-        raw_keypoints = results[0].keypoints.xy[0].cpu().numpy() 
-        
-        return img, raw_keypoints, 1.0, 1.0
+        return self.extract_keypoints_from_frame(img)
+
+    def extract_keypoints_from_frame(
+        self, frame: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, float, float]:
+        """
+        Extract 33 BlazePose keypoints from a raw BGR numpy frame.
+        Returns (frame, keypoints_33x2, scale_x, scale_y).
+        """
+        h, w = frame.shape[:2]
+        img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+
+        if self._mode == RunningMode.IMAGE:
+            result = self._landmarker.detect(mp_image)
+        else:
+            self._frame_ts_ms += 33  # ~30 fps spacing
+            result = self._landmarker.detect_for_video(mp_image, self._frame_ts_ms)
+
+        if not result.pose_landmarks or len(result.pose_landmarks) == 0:
+            raise ValueError("No person detected in the frame.")
+
+        raw_keypoints = self._landmarks_to_keypoints(result.pose_landmarks[0], w, h)
+        return frame, raw_keypoints, 1.0, 1.0
+
+    def close(self):
+        self._landmarker.close()

@@ -1,3 +1,6 @@
-ultralytics
+mediapipe
 opencv-python-headless
 numpy
+fastapi
+uvicorn[standard]
+websockets
