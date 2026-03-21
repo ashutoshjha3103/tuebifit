@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useUser } from '../context/UserContext'
 import { Dumbbell, ChevronDown, ChevronUp, Info, Image, X } from 'lucide-react'
+import loading from '../data/loading.json'
 
 export default function ExercisesPage() {
   const { planData } = useUser()
   const [expandedDay, setExpandedDay] = useState(0)
   const [selectedExercise, setSelectedExercise] = useState(null)
+  const [loadingState, setLoadingState] = useState(0)
+
+  useEffect(() => {
+    let loadingInterval = setInterval(() => {
+      setLoadingState((prev) => (prev + 1) % loading.length)
+    }, 15000)
+    return () => clearInterval(loadingInterval)
+  }, [])
 
   if (!planData?.workout_plan?.days?.length) {
     return (
@@ -14,12 +23,11 @@ export default function ExercisesPage() {
         height: '100%', color: 'var(--text-secondary)', padding: 24, textAlign: 'center' }}>
         <div>
           <Dumbbell size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
-          <p>No workout plan available yet.</p>
+          <p>{loading[loadingState]}</p>
         </div>
       </div>
     )
   }
-
   const { days, notes } = planData.workout_plan
   const toggleDay = (i) => setExpandedDay(expandedDay === i ? -1 : i)
 
