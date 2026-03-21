@@ -1,3 +1,5 @@
+import math
+
 import cv2
 import json
 import numpy as np
@@ -229,5 +231,180 @@ class PullUpDetector(BaseExerciseDetector):
             "status": status,
             "elbow_angle": avg_elbow,
             "norm_disp": round(norm_disp, 3),
+            "facing_ratio": round(facing_ratio, 3),
+        }
+
+
+class PushUpDetector(BaseExerciseDetector):
+    """
+    Evaluates push-up form using elbow angle and head drop.
+
+    Biomechanics (person is horizontal):
+      Up  (rest):   arms extended, head level with hips, nose close to hip height.
+      Down (active): elbows bent (<100°), head drops well below hip plane.
+
+    Primary signal: average elbow angle (shoulder-elbow-wrist).
+    Secondary signal: nose-to-hip vertical gap normalized by upper-arm length.
+      This is camera-independent — it measures how far the nose has dropped
+      relative to the hips using a stable body-length reference.
+
+    A rep is: Up → Down → Up.
+    """
+
+    REST_STATE = "Up"
+    ACTIVE_STATE = "Down"
+
+    def __init__(self, config_path: str = "config.json"):
+        super().__init__(config_path)
+
+    def evaluate_form(self, keypoints: np.ndarray) -> Dict[str, Any]:
+        l_sh = keypoints[self.kp_map["left_shoulder"]]
+        r_sh = keypoints[self.kp_map["right_shoulder"]]
+        l_el = keypoints[self.kp_map["left_elbow"]]
+        r_el = keypoints[self.kp_map["right_elbow"]]
+        l_wr = keypoints[self.kp_map["left_wrist"]]
+        r_wr = keypoints[self.kp_map["right_wrist"]]
+        l_hip = keypoints[self.kp_map["left_hip"]]
+        r_hip = keypoints[self.kp_map["right_hip"]]
+        nose = keypoints[self.kp_map["nose"]]
+
+        # Elbow angle (shoulder-elbow-wrist)
+        l_angle = calculate_angle(l_sh, l_el, l_wr)
+        r_angle = calculate_angle(r_sh, r_el, r_wr)
+        angles = [a for a in [l_angle, r_angle] if a > 0]
+        avg_elbow = sum(angles) / len(angles) if angles else 0.0
+
+        # Upper arm length (stable body reference for normalization)
+        upper_arms = []
+        for sh, el in [(l_sh, l_el), (r_sh, r_el)]:
+            if sh[0] > 0 and el[0] > 0:
+                upper_arms.append(math.sqrt((sh[0]-el[0])**2 + (sh[1]-el[1])**2))
+        ua_len = sum(upper_arms) / len(upper_arms) if upper_arms else 1.0
+
+        # Nose-to-hip gap: how far the nose has dropped below the hip plane,
+        # normalized by upper arm length.  Higher = deeper push-up.
+        hip_mid = get_midpoint(l_hip, r_hip)
+        nose_hip_gap = nose[1] - hip_mid[1]  # positive = nose below hips (Y down)
+        norm_nose_drop = nose_hip_gap / ua_len if ua_len > 0 else 0.0
+
+        # View detection (same facing-ratio scheme)
+        sh_mid = get_midpoint(l_sh, r_sh)
+        torso_vert = calculate_vertical_displacement(sh_mid, hip_mid)
+        shoulder_width = abs(l_sh[0] - r_sh[0])
+        facing_ratio = shoulder_width / torso_vert if torso_vert > 0 else 0.0
+
+        if facing_ratio > 0.60:
+            view = "Frontal"
+        elif facing_ratio < 0.25:
+            view = "Profile"
+        else:
+            view = "Oblique"
+
+        # Combined threshold:
+        #   "Down" requires BOTH bent elbows AND a visible head drop.
+        #   Safety override at very high nose drop (regardless of elbow noise).
+        status = self.REST_STATE
+
+        if (0 < avg_elbow < 100 and norm_nose_drop > 0.50):
+            status = self.ACTIVE_STATE
+        if norm_nose_drop > 0.80:
+            status = self.ACTIVE_STATE
+
+        return {
+            "view": view,
+            "status": status,
+            "elbow_angle": round(avg_elbow, 1),
+            "nose_drop": round(norm_nose_drop, 3),
+            "facing_ratio": round(facing_ratio, 3),
+        }
+
+
+class DeadliftDetector(BaseExerciseDetector):
+    """
+    Evaluates deadlift form using the hip joint angle (torso-to-leg)
+    and vertical displacement of upper-body keypoints.
+
+    Biomechanics:
+      Standing (rest):  hips extended, torso upright. Hip angle ~160-175°,
+                        shoulders high above ankles.
+      Lifting (active): hips flexed, torso bent forward. Hip angle ~80-110°,
+                        shoulders drop toward ankle level.
+
+    Primary signal: hip angle (shoulder-hip-knee).
+    Secondary signal: shoulder-to-ankle vertical displacement normalized
+                      by frame height (captures head/shoulder/elbow drop).
+
+    A rep is: Standing → Lifting → Standing.
+    """
+
+    REST_STATE = "Standing"
+    ACTIVE_STATE = "Lifting"
+
+    def __init__(self, config_path: str = "config.json"):
+        super().__init__(config_path)
+
+    def evaluate_form(self, keypoints: np.ndarray) -> Dict[str, Any]:
+        l_sh = keypoints[self.kp_map["left_shoulder"]]
+        r_sh = keypoints[self.kp_map["right_shoulder"]]
+        l_hip = keypoints[self.kp_map["left_hip"]]
+        r_hip = keypoints[self.kp_map["right_hip"]]
+        l_knee = keypoints[self.kp_map["left_knee"]]
+        r_knee = keypoints[self.kp_map["right_knee"]]
+        l_ankle = keypoints[self.kp_map["left_ankle"]]
+        r_ankle = keypoints[self.kp_map["right_ankle"]]
+
+        sh_mid = get_midpoint(l_sh, r_sh)
+        hip_mid = get_midpoint(l_hip, r_hip)
+        ankle_mid = get_midpoint(l_ankle, r_ankle)
+
+        # Hip angle: shoulder-hip-knee (torso vs. upper leg)
+        l_hip_angle = calculate_angle(l_sh, l_hip, l_knee)
+        r_hip_angle = calculate_angle(r_sh, r_hip, r_knee)
+        hip_angles = [a for a in [l_hip_angle, r_hip_angle] if a > 0]
+        avg_hip_angle = sum(hip_angles) / len(hip_angles) if hip_angles else 0.0
+
+        # Shoulder-ankle vertical displacement (normalized by frame-height
+        # proxy: ankle_y, which is near the bottom of the frame)
+        sh_ankle_disp = (ankle_mid[1] - sh_mid[1]) / ankle_mid[1] if ankle_mid[1] > 0 else 0.0
+
+        # View detection
+        torso_vert = calculate_vertical_displacement(sh_mid, hip_mid)
+        shoulder_width = abs(l_sh[0] - r_sh[0])
+        # For deadlifts the facing ratio inflates when bent over,
+        # so we only use it at high hip angles for a stable reading.
+        facing_ratio = shoulder_width / torso_vert if torso_vert > 0 else 0.0
+        if facing_ratio > 0.60:
+            view = "Frontal"
+        elif facing_ratio < 0.25:
+            view = "Profile"
+        else:
+            view = "Oblique"
+
+        status = self.REST_STATE
+
+        if view == "Profile":
+            # Profile: hip angle is the most reliable signal
+            if 0 < avg_hip_angle < 130:
+                status = self.ACTIVE_STATE
+        elif view == "Frontal":
+            # Frontal: hip angle foreshortens, lean more on displacement
+            if sh_ankle_disp < 0.70 or (0 < avg_hip_angle < 125):
+                status = self.ACTIVE_STATE
+        else:
+            # Oblique / general: blend both signals
+            if 0 < avg_hip_angle < 125:
+                status = self.ACTIVE_STATE
+            elif avg_hip_angle < 140 and sh_ankle_disp < 0.65:
+                status = self.ACTIVE_STATE
+
+        # Safety: very acute hip angle is always Lifting
+        if 0 < avg_hip_angle < 100:
+            status = self.ACTIVE_STATE
+
+        return {
+            "view": view,
+            "status": status,
+            "hip_angle": round(avg_hip_angle, 1),
+            "sh_ankle_disp": round(sh_ankle_disp, 3),
             "facing_ratio": round(facing_ratio, 3),
         }

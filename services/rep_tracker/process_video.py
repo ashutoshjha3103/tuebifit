@@ -15,7 +15,7 @@ import time
 import cv2
 
 from inference import PoseEstimator
-from detectors import SquatDetector, PullUpDetector
+from detectors import SquatDetector, PullUpDetector, PushUpDetector, DeadliftDetector
 from state_machine import RepCounter
 
 EXERCISES = {
@@ -23,11 +23,29 @@ EXERCISES = {
         "detector_cls": SquatDetector,
         "rest_state": "Standing",
         "active_state": "Squatting",
+        "entry_frames": 3,
+        "exit_frames": 15,
     },
     "pullup": {
         "detector_cls": PullUpDetector,
         "rest_state": PullUpDetector.REST_STATE,
         "active_state": PullUpDetector.ACTIVE_STATE,
+        "entry_frames": 3,
+        "exit_frames": 15,
+    },
+    "pushup": {
+        "detector_cls": PushUpDetector,
+        "rest_state": PushUpDetector.REST_STATE,
+        "active_state": PushUpDetector.ACTIVE_STATE,
+        "entry_frames": 2,
+        "exit_frames": 8,
+    },
+    "deadlift": {
+        "detector_cls": DeadliftDetector,
+        "rest_state": DeadliftDetector.REST_STATE,
+        "active_state": DeadliftDetector.ACTIVE_STATE,
+        "entry_frames": 3,
+        "exit_frames": 12,
     },
 }
 
@@ -59,10 +77,17 @@ def process_video(input_path: str, output_path: str,
 
     estimator = PoseEstimator(static_image_mode=False)
     detector = cfg["detector_cls"]("config.json")
+    # Scale hysteresis thresholds for low-fps inputs (GIFs, etc.)
+    fps_scale = max(0.1, fps / 30.0)
+    entry = max(1, int(cfg["entry_frames"] * fps_scale))
+    exit_ = max(1, int(cfg["exit_frames"] * fps_scale))
+
     counter = RepCounter(
         target_reps=target_reps,
         rest_state=cfg["rest_state"],
         active_state=cfg["active_state"],
+        entry_frames=entry,
+        exit_frames=exit_,
     )
 
     frame_idx = 0
