@@ -16,6 +16,7 @@ load_dotenv()
 API_URL = "https://api.featherless.ai/v1/chat/completions"
 API_KEY = os.getenv("FEATHERLESS_API_KEY")
 MODEL = os.getenv("FEATHERLESS_MODEL", "moonshotai/Kimi-K2-Thinking")
+FORMAT_MODEL = os.getenv("FEATHERLESS_FORMAT_MODEL", "Qwen/Qwen3-32B")
 
 TOOL_SOURCE_MAP = {
     "search_exercises": "exercise_db",
@@ -192,6 +193,8 @@ def chat_completion_request(
     tools=None,
     tool_choice=None,
     max_tokens: int = 4096,
+    model: str | None = None,
+    temperature: float | None = None,
 ):
     if not API_KEY:
         raise ValueError("Missing FEATHERLESS_API_KEY in environment or .env file")
@@ -202,7 +205,7 @@ def chat_completion_request(
     }
 
     payload = {
-        "model": MODEL,
+        "model": model or MODEL,
         "messages": messages,
         "max_tokens": max_tokens,
     }
@@ -211,6 +214,8 @@ def chat_completion_request(
         payload["tools"] = tools
     if tool_choice is not None:
         payload["tool_choice"] = tool_choice
+    if temperature is not None:
+        payload["temperature"] = temperature
 
     last_error = None
     for _ in range(2):
@@ -552,26 +557,18 @@ async def execute_function_call(function_call: dict) -> dict:
 
 
 RESPONSE_SCHEMA = (
-    "Return ONLY valid JSON (no markdown fences, no extra text). Schema:\n"
-    "{\n"
-    '  "query": string,\n'
-    '  "profile": { "name","age","height_cm","weight_kg","activity_level","dietary_preferences","session_time","fitness_level","bmi" },\n'
-    '  "summary": string,\n'
-    '  "workout_plan": {\n'
-    '    "days": [ { "day": int, "focus": string, "exercises": [ { "name","id","sets","reps","rest","equipment","primary_muscles","secondary_muscles","image_urls","instructions","difficulty","category" } ] } ],\n'
-    '    "notes": [string]\n'
-    "  },\n"
-    '  "nutrition_plan": {\n'
-    '    "daily_targets": { "calories","protein_g","carbs_g","fat_g" },\n'
-    '    "meals": [ { "name","type","foods": [ { "name","amount","calories","protein_g","carbs_g","fat_g","food_id" } ], "total_calories","total_protein_g" } ],\n'
-    '    "notes": [string]\n'
-    "  },\n"
-    '  "recommendations": [string],\n'
-    '  "warnings": [string]\n'
-    "}\n"
-    "Every exercise MUST include all fields from the tool output (id, image_urls, primary_muscles, etc). "
-    "Every food MUST include macros from tool output. "
-    "Do NOT invent data; use only what the tools returned."
+    "Return ONLY valid JSON. No markdown fences. Schema: "
+    '{"query":str, "profile":{}, "summary":str, '
+    '"workout_plan":{"days":[{"day":int, "focus":str, '
+    '"exercises":[{"name","id","sets","reps","rest","equipment",'
+    '"primary_muscles","secondary_muscles","image_urls",'
+    '"instructions","difficulty","category"}]}], "notes":[str]}, '
+    '"nutrition_plan":{"daily_targets":{"calories","protein_g","carbs_g","fat_g"}, '
+    '"meals":[{"name","type","foods":[{"name","amount","calories",'
+    '"protein_g","carbs_g","fat_g","food_id"}],'
+    '"total_calories","total_protein_g"}], "notes":[str]}, '
+    '"recommendations":[str], "warnings":[str]}. '
+    "Use tool data only. Keep exercises to 4-5 per day, meals to 3-4 total."
 )
 
 TOOL_CALL_SYSTEM_PROMPT = (
@@ -585,19 +582,115 @@ TOOL_CALL_SYSTEM_PROMPT = (
 
 FORMAT_SYSTEM_PROMPT = (
     "You have all the tool results above. Now produce the final answer. "
-    "Be concise: limit to min 1 exercise session and max 2 exercise sessions per day, 3-4 meals, short instructions (1 sentence each). "
-    "Do NOT repeat raw tool data verbatim -- summarize into the schema fields. "
+    "Do NOT think or reason -- output the JSON immediately with no preamble. "
+    "Be concise: 4-5 exercises per day, 3 meals, 1-sentence instructions. "
     f"{RESPONSE_SCHEMA}"
 )
 
-MAX_TOOL_ROUNDS = 3
-MAX_TOOL_RESULT_CHARS = 3000
+MAX_TOOL_ROUNDS = 1
+MAX_TOOL_RESULT_CHARS = 2000
 
 
 def truncate_tool_content(content: str) -> str:
     if len(content) <= MAX_TOOL_RESULT_CHARS:
         return content
     return content[:MAX_TOOL_RESULT_CHARS] + '... [truncated]"}'
+
+
+def _extract_exercise_summary(raw: dict) -> list[dict]:
+    """Pull only the fields the formatting LLM needs from exercise tool output."""
+    items = []
+    if not raw.get("ok"):
+        return items
+    for entry in raw.get("result", []):
+        text = entry.get("text", "") if isinstance(entry, dict) else ""
+        if not text:
+            continue
+        try:
+            parsed = json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        for ex in parsed.get("results", [parsed] if "id" in parsed else []):
+            items.append({
+                "id": ex.get("id"),
+                "name": ex.get("name"),
+                "level": ex.get("level"),
+                "category": ex.get("category"),
+                "equipment": ex.get("equipment"),
+                "force": ex.get("force"),
+                "mechanic": ex.get("mechanic"),
+                "primaryMuscles": ex.get("primaryMuscles", []),
+                "secondaryMuscles": ex.get("secondaryMuscles", []),
+                "imageUrls": ex.get("imageUrls", []),
+            })
+    return items
+
+
+def _extract_food_summary(raw: dict) -> list[dict]:
+    """Pull only the fields the formatting LLM needs from nutrition tool output."""
+    items = []
+    if not raw.get("ok"):
+        return items
+    for entry in raw.get("result", []):
+        text = entry.get("text", "") if isinstance(entry, dict) else ""
+        if not text:
+            continue
+        try:
+            foods = json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if isinstance(foods, dict):
+            foods = [foods]
+        for f in foods[:1]:
+            n = f.get("nutrition_100g", {})
+            items.append({
+                "food_id": f.get("id"),
+                "name": f.get("name"),
+                "cal": n.get("calories"),
+                "protein": n.get("protein"),
+                "carbs": n.get("carbohydrates"),
+                "fat": n.get("total_fat"),
+                "fiber": n.get("dietary_fiber"),
+            })
+    return items
+
+
+def build_compact_summary(tool_data: dict) -> str:
+    """Build a small, structured summary for the formatting LLM."""
+    exercises = []
+    for raw in tool_data.get("exercise_db", {}).get("raw", []):
+        exercises.extend(_extract_exercise_summary(raw))
+
+    seen_ex = set()
+    unique_exercises = []
+    for ex in exercises:
+        if ex["id"] not in seen_ex:
+            seen_ex.add(ex["id"])
+            unique_exercises.append(ex)
+
+    foods = []
+    for raw in tool_data.get("opennutrition", {}).get("raw", []):
+        foods.extend(_extract_food_summary(raw))
+
+    seen_fd = set()
+    unique_foods = []
+    for fd in foods:
+        if fd["food_id"] not in seen_fd:
+            seen_fd.add(fd["food_id"])
+            unique_foods.append(fd)
+
+    return json.dumps(
+        {"exercises": unique_exercises[:12], "foods": unique_foods[:8]},
+        separators=(",", ":"),
+    )
+
+    MAX_SUMMARY = 4000
+    if len(summary) > MAX_SUMMARY:
+        summary = json.dumps(
+            {"exercises": unique_exercises[:4], "foods": unique_foods[:4]},
+            separators=(",", ":"),
+        )
+    return summary
 
 
 # -----------------------------
@@ -666,15 +759,8 @@ async def run_conversation(user_query: str):
         print(f"Tool data collected: exercises={has_exercise_data}, nutrition={has_nutrition_data}")
 
         # --- Phase 2: fresh compact context for the formatting call ---
-        def summarise_tool_results(tool_data: dict) -> str:
-            parts = []
-            for source, bucket in tool_data.items():
-                for i, raw in enumerate(bucket["raw"]):
-                    call_info = bucket["calls"][i] if i < len(bucket["calls"]) else {}
-                    content = json.dumps(raw)
-                    content = truncate_tool_content(content)
-                    parts.append(f"[{source}] {call_info.get('name','?')}: {content}")
-            return "\n\n".join(parts)
+        compact = build_compact_summary(collected_tool_data)
+        print(f"Compact summary size: {len(compact)} chars")
 
         format_messages = [
             {"role": "system", "content": FORMAT_SYSTEM_PROMPT},
@@ -683,16 +769,25 @@ async def run_conversation(user_query: str):
                 "content": (
                     f"User profile: {format_user_profile(user)}\n"
                     f"User request: {user_query}\n\n"
-                    f"Tool results:\n{summarise_tool_results(collected_tool_data)}"
+                    f"Available data from tools:\n{compact}"
                 ),
             },
         ]
 
-        format_resp = chat_completion_request(format_messages, max_tokens=4096)
+        print(f"Formatting with model: {FORMAT_MODEL}")
+        format_resp = chat_completion_request(
+            format_messages,
+            max_tokens=4096,
+            model=FORMAT_MODEL,
+            temperature=0,
+        )
         raw_text = format_resp["choices"][0]["message"]["content"]
 
-        # Strip markdown code fences if model wrapped the JSON
+        import re
         cleaned = raw_text.strip()
+        # Strip <think>...</think> blocks (Qwen3, reasoning models)
+        cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
+        # Strip markdown code fences
         if cleaned.startswith("```"):
             first_nl = cleaned.index("\n")
             cleaned = cleaned[first_nl + 1 :]
