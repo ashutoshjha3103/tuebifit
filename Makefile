@@ -61,8 +61,12 @@ build-rep-tracker:
 docker-run-rep-tracker:
 	docker run --rm -p 8000:8000 tuebifit-rep-tracker
 
+# ── API server ──────────────────────────────────────────────────────
+run-api: setup-venv
+	cd services && ../$(VENV_DIR)/bin/python -m uvicorn api_server:app --host 0.0.0.0 --port 8001 --reload
+
 # ── Frontend ────────────────────────────────────────────────────────
 run-frontend:
 	cd frontend && npm run dev
 
-run-all: run-frontend run-rep-server
+run-all: run-frontend run-api run-rep-server

@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { generatePlan } from '../data/api'
 import samplePlan from '../data/samplePlan'
+import LoadingScreen from '../components/LoadingScreen'
 
 const STEPS = [
   { key: 'name', title: "What's your name?", subtitle: 'We\'ll personalize your experience' },
@@ -12,6 +14,7 @@ const STEPS = [
   { key: 'allergies', title: 'Any food allergies?', subtitle: 'We\'ll keep these out of your plans' },
   { key: 'activityLevel', title: 'Current activity', subtitle: 'How active is your daily life?' },
   { key: 'duration', title: 'Workout duration', subtitle: 'How long can you train per session?' },
+  { key: 'customQuery', title: 'Describe your ideal plan', subtitle: 'Tell us what you\'re looking for — or skip for a default plan' },
 ]
 
 const FITNESS_OPTIONS = [
@@ -36,11 +39,14 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
   const { saveProfile, savePlan, defaultProfile } = useUser()
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState({ ...defaultProfile })
+  const [form, setForm] = useState({ ...defaultProfile, customQuery: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const update = (key, val) => setForm((p) => ({ ...p, [key]: val }))
 
   const canProceed = () => {
+    if (loading) return false
     switch (STEPS[step].key) {
       case 'name': return form.name.trim().length > 0
       case 'body': return form.weight && form.age && form.height
@@ -49,17 +55,29 @@ export default function OnboardingPage() {
       case 'allergies': return true
       case 'activityLevel': return !!form.activityLevel
       case 'duration': return true
+      case 'customQuery': return true
       default: return true
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < STEPS.length - 1) {
       setStep(step + 1)
     } else {
       saveProfile(form)
-      savePlan(samplePlan)
-      navigate('/app')
+      setLoading(true)
+      setError(null)
+      try {
+        const plan = await generatePlan(form)
+        savePlan(plan)
+        navigate('/app')
+      } catch (err) {
+        console.warn('API call failed, using sample data:', err.message)
+        savePlan(samplePlan)
+        navigate('/app')
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -197,9 +215,36 @@ export default function OnboardingPage() {
           </div>
         )
 
+      case 'customQuery':
+        return (
+          <div className="input-group slide-up">
+            <label>Your fitness goals (optional)</label>
+            <textarea
+              className="input-field"
+              placeholder={"e.g. Build me a workout plan for core stability with 3 sessions per week and a high fiber diet."}
+              value={form.customQuery}
+              onChange={(e) => update('customQuery', e.target.value)}
+              rows={5}
+              style={{
+                resize: 'vertical',
+                minHeight: 120,
+                lineHeight: 1.5,
+                fontFamily: 'inherit',
+              }}
+            />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+              Be as specific as you like, or leave blank for a plan based on your profile.
+            </span>
+          </div>
+        )
+
       default:
         return null
     }
+  }
+
+  if (loading) {
+    return <LoadingScreen />
   }
 
   const progress = ((step + 1) / STEPS.length) * 100
@@ -255,11 +300,16 @@ export default function OnboardingPage() {
       }}>
         <button className="btn btn-primary" onClick={handleNext} disabled={!canProceed()}>
           {step === STEPS.length - 1 ? (
-            <>Get My Plan <Check size={18} /></>
+            <>Generate My Plan <Check size={18} /></>
           ) : (
             <>Continue <ChevronRight size={18} /></>
           )}
         </button>
+        {error && (
+          <p style={{ fontSize: 12, color: 'var(--danger)', textAlign: 'center', marginTop: 8 }}>
+            {error}
+          </p>
+        )}
       </div>
     </div>
   )

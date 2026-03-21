@@ -91,6 +91,8 @@ export default function MainLayout() {
             </div>
           ))}
         </div>
+        {/* Portal target for detail overlays — sits inside the content area but outside the transform */}
+        <div id="detail-portal" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
       </div>
 
       {/* Page dots */}

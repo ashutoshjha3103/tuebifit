@@ -717,7 +717,9 @@ def build_compact_summary(tool_data: dict) -> str:
 # -----------------------------
 # Main conversation flow
 # -----------------------------
-async def run_conversation(user_query: str):
+async def run_conversation(user_query: str, profile_override: Optional[Profile] = None) -> dict:
+    """Run the full tool-calling + formatting pipeline and return a validated DashboardPayload dict."""
+    active_user = profile_override or user
     client, mcp_tools = await get_mcp_tools()
 
     try:
@@ -731,7 +733,7 @@ async def run_conversation(user_query: str):
             {"role": "system", "content": TOOL_CALL_SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": f"{format_user_profile(user)}. Request: {user_query}",
+                "content": f"{format_user_profile(active_user)}. Request: {user_query}",
             },
         ]
 
@@ -788,7 +790,7 @@ async def run_conversation(user_query: str):
             {
                 "role": "user",
                 "content": (
-                    f"User profile: {format_user_profile(user)}\n"
+                    f"User profile: {format_user_profile(active_user)}\n"
                     f"User request: {user_query}\n\n"
                     f"Available data from tools:\n{compact}"
                 ),
@@ -798,7 +800,7 @@ async def run_conversation(user_query: str):
         print(f"Formatting with model: {FORMAT_MODEL}")
         format_resp = chat_completion_request(
             format_messages,
-            max_tokens=4096,
+            max_tokens=8192,
             model=FORMAT_MODEL,
             temperature=0,
         )
@@ -806,9 +808,7 @@ async def run_conversation(user_query: str):
 
         import re
         cleaned = raw_text.strip()
-        # Strip <think>...</think> blocks (Qwen3, reasoning models)
         cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
-        # Strip markdown code fences
         if cleaned.startswith("```"):
             first_nl = cleaned.index("\n")
             cleaned = cleaned[first_nl + 1 :]
@@ -828,10 +828,11 @@ async def run_conversation(user_query: str):
                 raw_assistant_text=cleaned,
             )
             print(json.dumps(validated, indent=2))
+            return validated
         except json.JSONDecodeError:
             fallback_payload = {
                 "query": user_query,
-                "profile": build_profile_payload(user),
+                "profile": build_profile_payload(active_user),
                 "summary": "LLM returned non-JSON output; using fallback envelope.",
                 "workout_plan": {"days": [], "notes": []},
                 "nutrition_plan": {"daily_targets": {}, "meals": [], "notes": []},
@@ -842,6 +843,7 @@ async def run_conversation(user_query: str):
             }
             validated = validate_payload(fallback_payload)
             print(json.dumps(validated, indent=2))
+            return validated
 
     finally:
         if hasattr(client, "close"):
@@ -850,6 +852,6 @@ async def run_conversation(user_query: str):
 
 if __name__ == "__main__":
     query = " ".join(sys.argv[1:]).strip() or (
-        "Build me a 2-day push/pull workout and suggest meals for fat loss. Include exercise image links."
+        "Build me a 3-day workout  plan that focuses on building functional strength and suggest meals for fat loss for 3 meals a day for a 5 days. Take into consideration the user profile and plan accordingly."
     )
     asyncio.run(run_conversation(query))

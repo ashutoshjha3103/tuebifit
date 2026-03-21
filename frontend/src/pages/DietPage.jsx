@@ -1,13 +1,30 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useUser } from '../context/UserContext'
 import { UtensilsCrossed, ChevronDown, ChevronUp, Flame, Beef, Wheat, Droplets } from 'lucide-react'
+
+function normalizeMeals(nutritionPlan) {
+  const meals = nutritionPlan?.meals || []
+  if (!meals.length) return []
+
+  if (meals[0]?.day !== undefined && meals[0]?.items) {
+    return meals
+  }
+
+  const grouped = [{ day: 1, name: 'Daily Meals', items: meals }]
+  return grouped
+}
 
 export default function DietPage() {
   const { planData } = useUser()
   const [expandedDay, setExpandedDay] = useState(0)
   const [selectedMeal, setSelectedMeal] = useState(null)
 
-  if (!planData?.nutrition_plan?.meals?.length) {
+  const normalizedMeals = useMemo(
+    () => normalizeMeals(planData?.nutrition_plan),
+    [planData?.nutrition_plan]
+  )
+
+  if (!normalizedMeals.length) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
         height: '100%', color: 'var(--text-secondary)', padding: 24, textAlign: 'center' }}>
@@ -19,7 +36,8 @@ export default function DietPage() {
     )
   }
 
-  const { daily_targets, meals, notes } = planData.nutrition_plan
+  const daily_targets = planData?.nutrition_plan?.daily_targets
+  const notes = planData?.nutrition_plan?.notes
   const toggleDay = (i) => setExpandedDay(expandedDay === i ? -1 : i)
 
   return (
@@ -31,7 +49,10 @@ export default function DietPage() {
           Nutrition Plan
         </h2>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-          {meals.length}-day meal plan · Tap a day to view meals
+          {normalizedMeals.length > 1
+            ? `${normalizedMeals.length}-day meal plan`
+            : `${normalizedMeals[0]?.items?.length || 0} meals`
+          } · Tap to view details
         </p>
       </div>
 
@@ -39,10 +60,10 @@ export default function DietPage() {
       {daily_targets && (
         <div className="card" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-around' }}>
           {[
-            { label: 'Calories', value: daily_targets.calories, unit: 'kcal', icon: Flame, color: '#ff7043' },
-            { label: 'Protein', value: daily_targets.protein_g, unit: 'g', icon: Beef, color: '#ef5350' },
-            { label: 'Carbs', value: daily_targets.carbs_g, unit: 'g', icon: Wheat, color: '#ffa726' },
-            { label: 'Fat', value: daily_targets.fat_g, unit: 'g', icon: Droplets, color: '#42a5f5' },
+            { label: 'Calories', value: daily_targets.calories, icon: Flame, color: '#ff7043' },
+            { label: 'Protein', value: daily_targets.protein_g ? `${daily_targets.protein_g}g` : '—', icon: Beef, color: '#ef5350' },
+            { label: 'Carbs', value: daily_targets.carbs_g ? `${daily_targets.carbs_g}g` : '—', icon: Wheat, color: '#ffa726' },
+            { label: 'Fat', value: daily_targets.fat_g ? `${daily_targets.fat_g}g` : '—', icon: Droplets, color: '#42a5f5' },
           ].map((t) => (
             <div key={t.label} style={{ textAlign: 'center' }}>
               <t.icon size={16} color={t.color} style={{ marginBottom: 4 }} />
@@ -57,7 +78,7 @@ export default function DietPage() {
 
       {/* Day rows */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {meals.map((dayMeal, i) => (
+        {normalizedMeals.map((dayMeal, i) => (
           <div key={dayMeal.day} className="card fade-in" style={{ animationDelay: `${i * 50}ms`, padding: 0, overflow: 'hidden' }}>
             {/* Day header */}
             <button
@@ -107,12 +128,15 @@ export default function DietPage() {
                     }}
                       onClick={() => setSelectedMeal(selectedMeal === `${i}-${j}` ? null : `${i}-${j}`)}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3, flex: 1 }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{
+                          fontSize: 13, fontWeight: 600, lineHeight: 1.3,
+                          wordWrap: 'break-word', overflowWrap: 'break-word',
+                        }}>
                           {meal.name}
                         </div>
                       </div>
-                      <span className="chip chip-green" style={{ marginBottom: 8 }}>{meal.type}</span>
+                      {meal.type && <span className="chip chip-green" style={{ marginBottom: 8 }}>{meal.type}</span>}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                           <span style={{ color: 'var(--text-muted)' }}>Calories</span>
@@ -125,9 +149,29 @@ export default function DietPage() {
                       </div>
                       <div style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
                         {meal.foods.map((food, k) => (
-                          <div key={k} style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{food.name}</span>
-                            <span style={{ color: 'var(--text-muted)', flexShrink: 0, marginLeft: 8 }}>{food.amount}</span>
+                          <div key={k} style={{
+                            fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4,
+                            lineHeight: 1.4,
+                          }}>
+                            <div style={{
+                              display: 'flex', justifyContent: 'space-between', gap: 6,
+                            }}>
+                              <span style={{
+                                flex: 1, minWidth: 0,
+                                wordWrap: 'break-word', overflowWrap: 'break-word',
+                              }}>
+                                {food.name}
+                              </span>
+                              <span style={{
+                                color: 'var(--text-muted)', flexShrink: 0,
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {food.amount}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                              {food.calories}cal · {food.protein_g}p · {food.carbs_g}c · {food.fat_g}f
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -145,7 +189,10 @@ export default function DietPage() {
         <div className="card" style={{ marginTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--green-primary)' }}>Notes</div>
           {notes.map((note, i) => (
-            <div key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 4 }}>
+            <div key={i} style={{
+              fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 4,
+              wordWrap: 'break-word', overflowWrap: 'break-word',
+            }}>
               • {note}
             </div>
           ))}
