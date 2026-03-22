@@ -1,0 +1,39 @@
+.git
+.gitignore
+.venv
+.venv-win
+.vite
+__pycache__
+*.pyc
+*.pyo
+
+node_modules
+frontend/node_modules
+
+# Large model files not needed by the API server
+*.task
+*.onnx
+*.pt
+*.pth
+services/rep_tracker/pose_landmarker_heavy.task
+services/rep_tracker/yolov8n-pose.pt
+
+# IDE / editor
+.vscode
+.idea
+.cursor
+*.swp
+*.swo
+
+# Build artifacts
+dist/
+build/
+*.egg-info
+
+# Misc
+*.log
+.env
+.DS_Store
+LICENSE
+README.md
+Makefile

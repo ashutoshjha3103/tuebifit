@@ -3,10 +3,13 @@ import json
 import logging
 import os
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from featherless_demo import (
@@ -196,6 +199,23 @@ async def generate_plan(req: GeneratePlanRequest):
     except Exception as e:
         logger.error(f"Plan generation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Plan generation failed: {str(e)}")
+
+
+DIST_DIR = Path(os.environ.get("DIST_DIR", Path(__file__).resolve().parent / ".." / "frontend" / "dist"))
+
+if (DIST_DIR / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=DIST_DIR / "assets"), name="static-assets")
+    logger.info(f"Serving frontend assets from {DIST_DIR / 'assets'}")
+
+    @app.get("/{full_path:path}")
+    async def spa_fallback(request: Request, full_path: str):
+        """Serve index.html for any non-API route (React Router SPA support)."""
+        file_path = DIST_DIR / full_path
+        if full_path and file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(DIST_DIR / "index.html")
+else:
+    logger.info(f"No frontend dist found at {DIST_DIR}; skipping static file serving")
 
 
 if __name__ == "__main__":

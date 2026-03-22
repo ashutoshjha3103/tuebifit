@@ -222,3 +222,7 @@ __marimo__/
 # Force-include everything under assets/
 !assets/
 !assets/**
+
+# Force-include annotated videos for production build
+!frontend/public/videos/
+!frontend/public/videos/**
