@@ -121,7 +121,7 @@ def _build_query(req: GeneratePlanRequest) -> str:
         return f"{req.query} {equipment_ctx}"
 
     parts = [
-        f"Build me a 7-day workout plan and a 2-day meal plan (3 meals per day for 2 days).",
+        f"Build me a 3-day workout plan and a 2-day meal plan (3 meals per day, each meal with 2-3 different foods).",
         f"I am a {req.fitness_level} with {req.activity_level} lifestyle.",
         f"Diet: {req.dietary_preferences}.",
     ]

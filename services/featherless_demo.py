@@ -589,9 +589,10 @@ RESPONSE_SCHEMA = (
     '"protein_g","carbs_g","fat_g","food_id"}],'
     '"total_calories","total_protein_g"}]}], "notes":[str]}, '
     '"recommendations":[str], "warnings":[str]}. '
-    "Use tool data only. Keep exercises to 4-5 per day. "
+    "Use tool data only. Default 3 workout days with 4-5 exercises each. "
     "The nutrition_plan.meals array MUST have exactly 2 day entries, "
-    "each with a day number, name (e.g. 'Day 1 Meals'), and 3 meal items. Keep it concise."
+    "each with a day number, name (e.g. 'Day 1 Meals'), and 3 meal items (Breakfast, Lunch, Dinner). "
+    "Each meal MUST have 2-3 different foods with realistic portions."
 )
 
 TOOL_CALL_SYSTEM_PROMPT = (
@@ -606,7 +607,7 @@ TOOL_CALL_SYSTEM_PROMPT = (
 FORMAT_SYSTEM_PROMPT = (
     "You have all the tool results above. Now produce the final answer. "
     "Do NOT think or reason -- output the JSON immediately with no preamble. "
-    "Be VERY concise: 4-5 exercises per day, 3 meals per day for 2 days only, 1-sentence instructions. "
+    "3 workout days, 4-5 exercises each. 2-day meal plan with 3 meals/day, each meal having 2-3 foods. 1-sentence instructions. "
     f"{RESPONSE_SCHEMA}"
 )
 
