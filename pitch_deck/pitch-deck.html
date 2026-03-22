@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TueBiFit — Pitch Deck</title>
+  <style>
+    :root {
+      --bg: #0a1929;
+      --card: #132f4c;
+      --green: #00e676;
+      --green-dark: #009624;
+      --text: #e3e8ef;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    body { overflow: hidden; }
+
+    .deck {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .slide {
+      display: none;
+      width: min(960px, 100%);
+      min-height: min(540px, 85vh);
+      padding: 2.5rem 3rem;
+      background: linear-gradient(145deg, var(--card) 0%, var(--bg) 100%);
+      border: 1px solid #1e3a5f;
+      border-radius: 16px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+    }
+    .slide.active { display: block; animation: in 0.35s ease; }
+    @keyframes in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide h1 {
+      color: var(--green);
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 800;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 3px solid var(--green-dark);
+    }
+    .slide h2 { color: var(--green); font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .slide .tagline { font-size: 1.15rem; color: var(--text); margin-bottom: 0.5rem; }
+    .slide .muted { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+
+    .slide ul { margin: 1rem 0 0 1.25rem; line-height: 1.5; font-size: 0.98rem; }
+    .slide li { margin-bottom: 0.45rem; }
+    .slide strong { color: var(--green); }
+
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    table.data td {
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid #1e3a5f;
+    }
+    table.data td:first-child { color: var(--muted); }
+    table.data td:last-child { text-align: right; font-weight: 700; color: var(--green); }
+
+    .big { font-size: clamp(1.5rem, 3.5vw, 2rem); font-weight: 800; color: var(--green); }
+
+    .nav-hint {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .counter {
+      position: fixed;
+      bottom: 1rem;
+      right: 1.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    /* Title slide — centered, app-style */
+    .slide.slide-title.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .slide-title .title-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .slide-title .app-logo-mark {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      box-shadow: 0 8px 32px rgba(0, 230, 118, 0.28);
+    }
+    .slide-title .app-logo-mark svg {
+      width: 44px;
+      height: 44px;
+    }
+    .slide-title .brand-name {
+      font-size: clamp(2.75rem, 10vw, 4.25rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+    .slide-title .brand-name .w { color: #ffffff; }
+    .slide-title .brand-name .g { color: var(--green); }
+    .slide-title .title-tagline {
+      margin-top: 20px;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .slide-title .title-meta {
+      margin-top: 36px;
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .slide-title .title-meta + .title-meta {
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <!-- 0 Title -->
+    <section class="slide slide-title active" data-i="0">
+      <div class="title-inner">
+        <div class="app-logo-mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#0a1929" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.4 14.4 9.6 9.6"/>
+            <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/>
+            <path d="m21.5 21.5-1.4-1.4"/>
+            <path d="M3.9 3.9 2.5 2.5"/>
+            <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>
+          </svg>
+        </div>
+        <div class="brand-name">
+          <span class="w">Tue</span><span class="g">Bi</span><span class="w">Fit</span>
+        </div>
+        <p class="title-tagline">AI Assisted Workout and Nutrition</p>
+        <p class="title-meta">Cursor Hackathon</p>
+        <p class="title-meta">March 2026</p>
+      </div>
+    </section>
+
+    <!-- 1 Problem -->
+    <section class="slide" data-i="1">
+      <h1>1 · The market problem</h1>
+      <p class="muted" style="margin-bottom:1rem;"><strong>Who:</strong> Fitness-focused consumers (25–45) who want structure without an $80–150/hr coach.</p>
+      <table class="data">
+        <tr><td>Fitness app market (2025)</td><td>~$12B</td></tr>
+        <tr><td>AI personal-trainer segment (2025)</td><td>~$17B</td></tr>
+        <tr><td>Health &amp; fitness app downloads (2024)</td><td>3.6B</td></tr>
+        <tr><td>Consumers prioritizing wellness</td><td>82%</td></tr>
+      </table>
+      <p class="muted"><strong>Today:</strong> Generic plans, siloed tools, <strong>55%</strong> concerned about <strong>privacy</strong>. Coaches are costly; apps are shallow.</p>
+    </section>
+
+    <!-- 2 Solution -->
+    <section class="slide" data-i="2">
+      <h1>2 · Our solution</h1>
+      <p class="muted" style="margin-bottom:1rem;"><strong>One sentence:</strong> Mobile app where an <strong>AI agent</strong> builds personalized workout + meal plans from <strong>real</strong> exercise &amp; nutrition DBs (MCP), plus <strong>on-device</strong> rep counting.</p>
+      <h2>Why ~10× better</h2>
+      <ul>
+        <li><strong>Grounded</strong> — tool-backed data, not vibes-only chat</li>
+        <li><strong>Unified</strong> — training + meals + form in one flow</li>
+        <li><strong>Privacy-aligned</strong> — rep video processed locally</li>
+      </ul>
+    </section>
+
+    <!-- 3 Business -->
+    <section class="slide" data-i="3">
+      <h1>3 · Business model</h1>
+      <table class="data">
+        <tr><td>Who pays</td><td>B2C → later gyms / employers</td></tr>
+        <tr><td>Price (hypothesis)</td><td>$12.99–19.99/mo · $4.99 starter</td></tr>
+        <tr><td>Cost to serve</td><td>~$3–8/user/mo early → 70%+ gross margin target</td></tr>
+      </table>
+      <p class="muted" style="margin-top:1rem;"><strong>Upside:</strong> White-label for studios, API for wellness platforms.</p>
+    </section>
+
+    <!-- 4 GTM -->
+    <section class="slide" data-i="4">
+      <h1>4 · Go-to-market</h1>
+      <h2>First 10 customers</h2>
+      <ul>
+        <li><strong>50 DMs</strong> — YC / Indie Hackers / fitness + AI Discords</li>
+        <li><strong>2 local gyms</strong> — free pilot on retention</li>
+        <li><strong>1 university</strong> rec / lifting club pilot</li>
+      </ul>
+      <p class="muted" style="margin-top:1rem;"><strong>Switch:</strong> One plan for <em>my</em> equipment &amp; diet + rep feedback <em>without</em> cloud video.</p>
+      <p class="muted"><strong>Edge:</strong> Demo day + waitlist + credible builder story.</p>
+    </section>
+
+    <!-- 5 Team -->
+    <section class="slide" data-i="5">
+      <h1>5 · Why us · Why now</h1>
+      <ul>
+        <li><strong>Team:</strong> 2 builders — full stack shipped (React, FastAPI, MCP, MediaPipe, Cloud Run)</li>
+        <li><strong>Now:</strong> ~half of users engaging with AI fitness features; majors funded — Zing Coach $10M, Ladder $15M+, EGYM $200M</li>
+        <li><strong>Commitment:</strong> <strong>Full-time</strong> if we see paying users or B2B pilots</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="nav-hint">← → or click to advance · Home / End for first / last</p>
+  <p class="counter" id="counter">1 / 6</p>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    let i = 0;
+    function show(n) {
+      i = Math.max(0, Math.min(n, slides.length - 1));
+      slides.forEach((s, j) => s.classList.toggle('active', j === i));
+      document.getElementById('counter').textContent = (i + 1) + ' / ' + slides.length;
+    }
+    document.querySelector('.deck').addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (e.clientX - rect.left > rect.width / 2) show(i + 1); else show(i - 1);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+      if (e.key === 'Home') show(0);
+      if (e.key === 'End') show(slides.length - 1);
+    });
+    show(0);
+  </script>
+</body>
+</html>
