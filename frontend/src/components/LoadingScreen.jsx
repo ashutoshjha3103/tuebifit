@@ -88,7 +88,7 @@ export default function LoadingScreen() {
           fontSize: 12, color: 'var(--text-muted)',
           textAlign: 'center', marginTop: 12,
         }}>
-          This usually takes 1–2 minutes
+          This usually takes 3–4 minutes
         </p>
       </div>
 

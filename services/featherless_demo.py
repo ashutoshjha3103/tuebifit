@@ -585,11 +585,13 @@ RESPONSE_SCHEMA = (
     '"primary_muscles","secondary_muscles","image_urls",'
     '"instructions","difficulty","category"}]}], "notes":[str]}, '
     '"nutrition_plan":{"daily_targets":{"calories","protein_g","carbs_g","fat_g"}, '
-    '"meals":[{"name","type","foods":[{"name","amount","calories",'
+    '"meals":[{"day":int,"name":str,"items":[{"name","type","foods":[{"name","amount","calories",'
     '"protein_g","carbs_g","fat_g","food_id"}],'
-    '"total_calories","total_protein_g"}], "notes":[str]}, '
+    '"total_calories","total_protein_g"}]}], "notes":[str]}, '
     '"recommendations":[str], "warnings":[str]}. '
-    "Use tool data only. Keep exercises to 4-5 per day, meals to 3-4 total."
+    "Use tool data only. Keep exercises to 4-5 per day. "
+    "The nutrition_plan.meals array MUST have exactly 2 day entries, "
+    "each with a day number, name (e.g. 'Day 1 Meals'), and 3 meal items. Keep it concise."
 )
 
 TOOL_CALL_SYSTEM_PROMPT = (
@@ -604,7 +606,7 @@ TOOL_CALL_SYSTEM_PROMPT = (
 FORMAT_SYSTEM_PROMPT = (
     "You have all the tool results above. Now produce the final answer. "
     "Do NOT think or reason -- output the JSON immediately with no preamble. "
-    "Be concise: 4-5 exercises per day, 3 meals, 1-sentence instructions. "
+    "Be VERY concise: 4-5 exercises per day, 3 meals per day for 2 days only, 1-sentence instructions. "
     f"{RESPONSE_SCHEMA}"
 )
 
