@@ -28,16 +28,13 @@ footer: 'TueBiFit · Cursor Hackathon 2026'
 
 # 1 · The market problem
 
-**Who:** Time-poor **fitness-focused consumers** (25–45) who want structure without a $80–150/hr coach.
-
-| | |
-|--:|--:|
-| **Fitness app market (2025)** | **~$12B** |
-| **AI personal-trainer segment (2025)** | **~$17B** |
-| **App downloads (2024)** | **3.6B** |
-| **Prioritize wellness** | **82%** |
-
-**Today:** Generic plans, siloed apps (log food *here*, workouts *there*), **55%** worry about **data privacy**. Alternatives are expensive or shallow.
+- **Beginners**
+  - **Plan + cues** — right program + **how to perform** each exercise
+    - Scattered sources → time lost, **bad form**
+- **Intermediate & advanced**
+  - **Diet** — macros / targets **off** vs. goals
+  - **Splits & muscle focus** — misaligned with gear, recovery, priorities
+- **Market:** **~$12B** apps · **~$17B** AI segment · **82%** wellness · mostly **generic / siloed** · **55%** **privacy** worry
 
 ---
 

@@ -54,7 +54,9 @@
     .slide .muted { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
 
     .slide ul { margin: 1rem 0 0 1.25rem; line-height: 1.5; font-size: 0.98rem; }
+    .slide ul ul { margin: 0.35rem 0 0.15rem 0.5rem; font-size: 0.96rem; }
     .slide li { margin-bottom: 0.45rem; }
+    .slide li > ul > li:last-child { margin-bottom: 0.25rem; }
     .slide strong { color: var(--green); }
 
     table.data {
@@ -225,6 +227,278 @@
       color: var(--muted);
       margin-top: 0.2rem;
     }
+
+    /* Slide: Market problem — larger body text */
+    .slide.slide-market-problem h1 {
+      font-size: clamp(2rem, 4.2vw, 2.6rem);
+    }
+    .slide.slide-market-problem ul {
+      font-size: clamp(1.05rem, 2vw, 1.22rem);
+      line-height: 1.6;
+    }
+    .slide.slide-market-problem ul ul {
+      font-size: clamp(1rem, 1.8vw, 1.12rem);
+    }
+
+    /* Slide: Our solution — larger text */
+    .slide.slide-solution h1 {
+      font-size: clamp(2rem, 4.2vw, 2.6rem);
+    }
+    .slide.slide-solution .muted {
+      font-size: clamp(1.08rem, 2.05vw, 1.24rem);
+      line-height: 1.6;
+    }
+    .slide.slide-solution h2 {
+      font-size: clamp(1.3rem, 2.35vw, 1.55rem);
+    }
+    .slide.slide-solution ul {
+      font-size: clamp(1.03rem, 1.95vw, 1.18rem);
+      line-height: 1.58;
+    }
+
+    /* Slide: Business model - flow diagram */
+    .slide.slide-business-flow h1 {
+      font-size: clamp(2rem, 4.1vw, 2.55rem);
+      margin-bottom: 1rem;
+    }
+    .slide.slide-business-flow .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .slide.slide-business-flow .flow-node {
+      background: rgba(10, 25, 41, 0.72);
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      padding: 0.8rem 0.75rem;
+      min-height: 132px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(0, 230, 118, 0.07);
+    }
+    .slide.slide-business-flow .flow-node h3 {
+      color: var(--green);
+      font-size: clamp(0.95rem, 1.7vw, 1.08rem);
+      margin-bottom: 0.45rem;
+      line-height: 1.25;
+    }
+    .slide.slide-business-flow .flow-node p {
+      color: var(--text);
+      font-size: clamp(0.85rem, 1.5vw, 0.96rem);
+      line-height: 1.35;
+    }
+    .slide.slide-business-flow .flow-arrow {
+      position: absolute;
+      top: 50%;
+      right: -0.68rem;
+      transform: translateY(-50%);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-shadow: 0 0 10px rgba(0, 230, 118, 0.25);
+    }
+    .slide.slide-business-flow .flow-node:last-child .flow-arrow {
+      display: none;
+    }
+    .slide.slide-business-flow .flow-note {
+      margin-top: 0.4rem;
+      margin-bottom: 0.9rem;
+      color: var(--muted);
+      font-size: clamp(0.9rem, 1.6vw, 1rem);
+      text-align: center;
+    }
+    .slide.slide-business-flow .flow-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.6rem;
+    }
+    .slide.slide-business-flow .kpi {
+      border: 1px solid #1e3a5f;
+      border-radius: 10px;
+      background: rgba(10, 25, 41, 0.58);
+      padding: 0.65rem;
+      text-align: center;
+    }
+    .slide.slide-business-flow .kpi .k {
+      color: var(--muted);
+      font-size: 0.82rem;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .slide.slide-business-flow .kpi .v {
+      color: var(--green);
+      font-size: clamp(0.94rem, 1.7vw, 1.06rem);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    @media (max-width: 860px) {
+      .slide.slide-business-flow .flow {
+        grid-template-columns: 1fr;
+      }
+      .slide.slide-business-flow .flow-node {
+        min-height: auto;
+      }
+      .slide.slide-business-flow .flow-arrow {
+        right: 50%;
+        top: auto;
+        bottom: -0.95rem;
+        transform: translateX(50%) rotate(90deg);
+      }
+      .slide.slide-business-flow .flow-kpis {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Slide: GTM - customer persona graphic */
+    .slide.slide-gtm-persona .gtm-layout {
+      display: grid;
+      gap: 1rem;
+      align-items: start;
+    }
+    .slide.slide-gtm-persona .persona-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .slide.slide-gtm-persona .persona-card {
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      background: rgba(10, 25, 41, 0.62);
+      padding: 0.9rem;
+      box-shadow: inset 0 0 0 1px rgba(0, 230, 118, 0.08);
+      height: 100%;
+    }
+    .slide.slide-gtm-persona .persona-title {
+      font-size: 0.85rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.55rem;
+    }
+    .slide.slide-gtm-persona .persona-graphic {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 0.7rem;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .slide.slide-gtm-persona .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #47ff9e, #00b85a);
+      position: relative;
+      box-shadow: 0 0 18px rgba(0, 230, 118, 0.3);
+    }
+    .slide.slide-gtm-persona .avatar::before {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0a1929;
+      top: 11px;
+      left: 18px;
+    }
+    .slide.slide-gtm-persona .avatar::after {
+      content: "";
+      position: absolute;
+      width: 32px;
+      height: 16px;
+      border-radius: 16px 16px 10px 10px;
+      background: #0a1929;
+      bottom: 8px;
+      left: 12px;
+    }
+    .slide.slide-gtm-persona .persona-name {
+      color: var(--green);
+      font-size: 1.02rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .slide.slide-gtm-persona .persona-sub {
+      color: var(--text);
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+    .slide.slide-gtm-persona .persona-points {
+      margin: 0.2rem 0 0 1rem;
+      font-size: 0.88rem;
+      line-height: 1.42;
+    }
+    .slide.slide-gtm-persona .persona-points li {
+      margin-bottom: 0.25rem;
+    }
+    @media (max-width: 860px) {
+      .slide.slide-gtm-persona .persona-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Slide: Why us / Why now */
+    .slide.slide-why-now .why-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-top: 0.2rem;
+    }
+    .slide.slide-why-now .why-card {
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      background: rgba(10, 25, 41, 0.6);
+      padding: 0.85rem 0.9rem;
+    }
+    .slide.slide-why-now .why-card h2 {
+      margin-bottom: 0.45rem;
+      font-size: 1.08rem;
+    }
+    .slide.slide-why-now .why-card ul {
+      margin-top: 0.4rem;
+      margin-left: 1rem;
+      font-size: 0.93rem;
+      line-height: 1.45;
+    }
+    .slide.slide-why-now .why-card li {
+      margin-bottom: 0.35rem;
+    }
+    .slide.slide-why-now .proof-strip {
+      margin-top: 0.8rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    .slide.slide-why-now .proof {
+      border: 1px solid #1e3a5f;
+      border-radius: 10px;
+      background: rgba(10, 25, 41, 0.5);
+      padding: 0.62rem;
+      text-align: center;
+    }
+    .slide.slide-why-now .proof .k {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 0.2rem;
+    }
+    .slide.slide-why-now .proof .v {
+      color: var(--green);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    @media (max-width: 860px) {
+      .slide.slide-why-now .why-grid,
+      .slide.slide-why-now .proof-strip {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -250,9 +524,31 @@
       </div>
     </section>
 
-    <!-- 1 Market Opportunity -->
-    <section class="slide slide-opportunity" data-i="1">
-      <h1>1 · The Market Opportunity</h1>
+    <!-- 1 Market problem -->
+    <section class="slide slide-market-problem" data-i="1">
+      <h1>1 · The market problem</h1>
+      <ul>
+        <li><strong>Beginners</strong>
+          <ul>
+            <li><strong>Plan + cues</strong> — right program + <strong>how to perform</strong> each exercise</li>
+            <ul>
+            <li>Scattered sources → time lost, <strong>bad form</strong></li>
+            </ul>
+          </ul>
+        </li>
+
+        <li><strong>Intermediate &amp; advanced</strong>
+          <ul>
+            <li><strong>Diet</strong> — macros / targets <strong>off</strong> vs. goals</li>
+            <li><strong>Splits &amp; muscle focus</strong> — misaligned with gear, recovery, priorities</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 2 Market Opportunity -->
+    <section class="slide slide-opportunity" data-i="2">
+      <h1>2 · The Market Opportunity</h1>
       <p class="opp-lead">Huge pull toward wellness and AI tools, but <strong>privacy worries</strong> and <strong>shallow personalization</strong> leave room for a better wedge.</p>
 
       <p class="bar-chart-title">Consumer demand and constraint signals</p>
@@ -297,55 +593,136 @@
       </div>
     </section>
 
-    <!-- 2 Solution -->
-    <section class="slide" data-i="2">
-      <h1>2 · Our solution</h1>
-      <p class="muted" style="margin-bottom:1rem;"><strong>One sentence:</strong> Mobile app where an <strong>AI agent</strong> builds personalized workout + meal plans from <strong>real</strong> exercise &amp; nutrition DBs (MCP), plus <strong>on-device</strong> rep counting.</p>
-      <h2>Why ~10× better</h2>
+    <!-- 3 Solution -->
+    <section class="slide slide-solution" data-i="3">
+      <h1>3 · Our Solution</h1>
+      <p class="muted" style="margin-bottom:1rem;">A mobile app where an <strong>AI agent</strong> builds <i>personalized workout + meal plans</i> from <strong>real exercise (MCP) &amp; nutrition DBs (MCP)</strong>, along with <strong>on-device assistance</strong>.</p>
+      <h2>Why Us?</h2>
       <ul>
-        <li><strong>Grounded</strong> — tool-backed data, not vibes-only chat</li>
-        <li><strong>Unified</strong> — training + meals + form in one flow</li>
-        <li><strong>Privacy-aligned</strong> — rep video processed locally</li>
+        <li><strong>Grounded and contextualized</strong> — tool-backed scientific data, not vibes-only convo or chat</li>
+        <li><strong>Highly credible data sources</strong></li>
+        <li><strong>Unified</strong> — provide a one stop solution for training planning+ meal planning + form monitoring in one flow</li>
+        <li><strong>A B2B2C wedge</strong> — consumer app with B2B pilot path (gyms, wellness platforms) for faster growth and moats</li>
+
       </ul>
     </section>
 
-    <!-- 3 Business -->
-    <section class="slide" data-i="3">
-      <h1>3 · Business model</h1>
-      <table class="data">
-        <tr><td>Who pays</td><td>B2C → later gyms / employers</td></tr>
-        <tr><td>Price (hypothesis)</td><td>$12.99–19.99/mo · $4.99 starter</td></tr>
-        <tr><td>Cost to serve</td><td>~$3–8/user/mo early → 70%+ gross margin target</td></tr>
-      </table>
-      <p class="muted" style="margin-top:1rem;"><strong>Upside:</strong> White-label for studios, API for wellness platforms.</p>
+    <!-- 4 Business -->
+    <section class="slide slide-business-flow" data-i="4">
+      <h1>4 · Business model</h1>
+      <div class="flow" aria-label="Business model flow">
+        <div class="flow-node">
+          <h3>Acquire Users</h3>
+          <p>Consumers join through creator content, gym pilots, and referral loops.</p>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </div>
+        <div class="flow-node">
+          <h3>Convert to Paid</h3>
+          <p>Starter at $3.99, then upgrade to $9.99-11.99 monthly premium plans.</p>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </div>
+        <div class="flow-node">
+          <h3>Deliver Value</h3>
+          <p>Personalized workouts + nutrition + on-device rep tracking improve outcomes.</p>
+          <span class="flow-arrow" aria-hidden="true">→</span>
+        </div>
+        <div class="flow-node">
+          <h3>Expand Revenue</h3>
+          <p>B2B2C pilots with gyms and wellness platforms, plus future white-label API.</p>
+        </div>
+      </div>
+      <p class="flow-note">Retention drives recurring subscriptions, then distribution partnerships widen margins, after showing POC.</p>
+
+      <div class="flow-kpis">
+        <div class="kpi"><span class="k">Who Pays</span><span class="v">B2C now, B2B later
+          Ad/sponsered partnerships possible but not core to initial model
+        </span></div>
+        <div class="kpi"><span class="k">Price</span><span class="v">$9.99/mo(B2B/user)
+          -11.99/mo(B2C) + $4.99 starter</span></div>
+        <div class="kpi"><span class="k">Cost to Serve</span><span class="v">~$3-8/user/mo, target 65%+ margin</span></div>
+      </div>
     </section>
 
-    <!-- 4 GTM -->
-    <section class="slide" data-i="4">
-      <h1>4 · Go-to-market</h1>
-      <h2>First 10 customers</h2>
-      <ul>
-        <li><strong>50 DMs</strong> — YC / Indie Hackers / fitness + AI Discords</li>
-        <li><strong>2 local gyms</strong> — free pilot on retention</li>
-        <li><strong>1 university</strong> rec / lifting club pilot</li>
-      </ul>
-      <p class="muted" style="margin-top:1rem;"><strong>Switch:</strong> One plan for <em>my</em> equipment &amp; diet + rep feedback <em>without</em> cloud video.</p>
-      <p class="muted"><strong>Edge:</strong> Demo day + waitlist + credible builder story.</p>
+    <!-- 5 GTM -->
+    <section class="slide slide-gtm-persona" data-i="5">
+      <h1>5 · Go-to-market</h1>
+      <div class="gtm-layout">
+        <div class="persona-row">
+          <aside class="persona-card" aria-label="Example customer persona">
+            <p class="persona-title">Example Persona 1</p>
+            <div class="persona-graphic">
+              <div class="avatar" aria-hidden="true"></div>
+              <div>
+                <p class="persona-name">Anna, 22</p>
+                <p class="persona-sub">Engineering student, beginner lifter, budget-conscious.</p>
+              </div>
+            </div>
+            <ul class="persona-points">
+              <li><strong>Goal:</strong> Build muscle in 12 weeks</li>
+              <li><strong>Pain:</strong> Confused by conflicting plans online</li>
+              <li><strong>Why TueBiFit:</strong> Clear workouts + food plan + private rep feedback</li>
+            </ul>
+          </aside>
+          <aside class="persona-card" aria-label="Example customer persona">
+            <p class="persona-title">Example Persona 2</p>
+            <div class="persona-graphic">
+              <div class="avatar" aria-hidden="true"></div>
+              <div>
+                <p class="persona-name">Ajay, 62</p>
+                <p class="persona-sub">Retired Professional, looking to stay active, Easy to use workflow.</p>
+              </div>
+            </div>
+            <ul class="persona-points">
+              <li><strong>Goal:</strong> Wants to manage their cholesterol levels, by staying active and eating well</li>
+              <li><strong>Pain:</strong> Overloaded with information and unsure where to start</li>
+              <li><strong>Why TueBiFit:</strong> Clear workouts + food plan + private rep feedback</li>
+            </ul>
+          </aside>
+        </div>
+        <div>
+          <h2>First 10 customers</h2>
+          <ul>
+            <li><strong>1 university</strong> — recreation / lifting club pilot</li>
+            <li><strong>2 local gyms</strong> — free pilot for small establishments on retention</li>
+            <li><strong>3 Municipalities hosted services</strong> — Health-focused initiatives by local governments</li>
+          </ul>
+          <p class="muted" style="margin-top:1rem;"><strong>Switch:</strong> One plan for <em>my</em> equipment &amp; diet + rep feedback <em>without</em> cloud video.</p>
+        </div>
+      </div>
     </section>
 
-    <!-- 5 Team -->
-    <section class="slide" data-i="5">
-      <h1>5 · Why us · Why now</h1>
-      <ul>
-        <li><strong>Team:</strong> 2 builders — full stack shipped (React, FastAPI, MCP, MediaPipe, Cloud Run)</li>
-        <li><strong>Now:</strong> ~half of users engaging with AI fitness features; majors funded — Zing Coach $10M, Ladder $15M+, EGYM $200M</li>
-        <li><strong>Commitment:</strong> <strong>Full-time</strong> if we see paying users or B2B pilots</li>
-      </ul>
+    <!-- 6 Team -->
+    <section class="slide slide-why-now" data-i="6">
+      <h1>6 · Why us · Why now</h1>
+      <div class="why-grid">
+        <article class="why-card">
+          <h2>Why us</h2>
+          <ul>
+            <li><strong>Execution depth:</strong> We already combined MCP-based planning, nutrition grounding and on-device rep tracking in one flow.</li>
+            <li><strong>Clear wedge:</strong> Privacy-first feedback plus personalized plans solve the exact pain points shown in beginner and 50+ personas.</li>
+            <li><strong>Practical GTM:</strong> University, local gym, and municipality pilot channels are already defined for first distribution.</li>
+          </ul>
+        </article>
+        <article class="why-card">
+          <h2>Why now</h2>
+          <ul>
+            <li><strong>Demand tailwind:</strong> Wellness intent is high and AI-assisted fitness behavior is now mainstream.</li>
+            <li><strong>Market gap:</strong> Most tools are generic or cloud-heavy; we are differentiated on personalization + privacy.</li>
+            <li><strong>Business timing:</strong> B2C subscriptions can fund early growth while B2B2C pilots unlock lower-CAC scale.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="proof-strip" aria-label="Why now proof points">
+        <div class="proof"><span class="k">Product Readiness</span><span class="v">Core stack already shipped end-to-end</span></div>
+        <div class="proof"><span class="k">Monetization</span><span class="v">Starter + premium + B2B expansion path</span></div>
+        <div class="proof"><span class="k">Founder Commitment</span><span class="v">Full-time on paid users or pilot traction</span></div>
+      </div>
     </section>
   </div>
 
   <p class="nav-hint">← → or click to advance · Home / End for first / last</p>
-  <p class="counter" id="counter">1 / 6</p>
+  <p class="counter" id="counter">1 / 7</p>
 
   <script>
     const slides = [...document.querySelectorAll('.slide')];
