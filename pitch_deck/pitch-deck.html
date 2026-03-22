@@ -141,6 +141,90 @@
     .slide-title .title-meta + .title-meta {
       margin-top: 4px;
     }
+
+    /* Slide: Market Opportunity — larger type + bar chart */
+    .slide.slide-opportunity h1 {
+      font-size: clamp(2rem, 4.2vw, 2.75rem);
+      margin-bottom: 0.5rem;
+    }
+    .slide.slide-opportunity .opp-lead {
+      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+      color: var(--muted);
+      margin-bottom: 1.35rem;
+      line-height: 1.45;
+    }
+    .slide.slide-opportunity .bar-chart-title {
+      font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .slide.slide-opportunity .bar-chart {
+      margin-top: 0.25rem;
+    }
+    .slide.slide-opportunity .bar-row {
+      display: grid;
+      grid-template-columns: minmax(12rem, 42%) 1fr auto;
+      gap: 0.65rem 1rem;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+    .slide.slide-opportunity .bar-label {
+      font-size: clamp(0.95rem, 1.75vw, 1.2rem);
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .slide.slide-opportunity .bar-track {
+      height: clamp(26px, 4vw, 32px);
+      background: var(--bg);
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .slide.slide-opportunity .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      background: linear-gradient(90deg, var(--green-dark), var(--green));
+      box-shadow: 0 0 12px rgba(0, 230, 118, 0.25);
+      min-width: 4px;
+    }
+    .slide.slide-opportunity .bar-pct {
+      font-size: clamp(1rem, 1.9vw, 1.25rem);
+      font-weight: 800;
+      color: var(--green);
+      min-width: 3.25rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .slide.slide-opportunity .bar-axis-wrap {
+      margin-top: 0.5rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid #1e3a5f;
+    }
+    .slide.slide-opportunity .bar-axis-row {
+      display: grid;
+      grid-template-columns: minmax(12rem, 42%) 1fr auto;
+      gap: 0.65rem 1rem;
+      align-items: center;
+    }
+    .slide.slide-opportunity .bar-axis-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      color: var(--muted);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      padding: 0 2px;
+    }
+    .slide.slide-opportunity .bar-axis-label {
+      grid-column: 2;
+      text-align: center;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
   </style>
 </head>
 <body>
@@ -160,23 +244,57 @@
         <div class="brand-name">
           <span class="w">Tue</span><span class="g">Bi</span><span class="w">Fit</span>
         </div>
-        <p class="title-tagline">AI Assisted Workout and Nutrition</p>
+        <p class="title-tagline">Your wingman for the gym, the kitchen &amp; sticking with it</p>
         <p class="title-meta">Cursor Hackathon</p>
         <p class="title-meta">March 2026</p>
       </div>
     </section>
 
-    <!-- 1 Problem -->
-    <section class="slide" data-i="1">
-      <h1>1 · The market problem</h1>
-      <p class="muted" style="margin-bottom:1rem;"><strong>Who:</strong> Fitness-focused consumers (25–45) who want structure without an $80–150/hr coach.</p>
-      <table class="data">
-        <tr><td>Fitness app market (2025)</td><td>~$12B</td></tr>
-        <tr><td>AI personal-trainer segment (2025)</td><td>~$17B</td></tr>
-        <tr><td>Health &amp; fitness app downloads (2024)</td><td>3.6B</td></tr>
-        <tr><td>Consumers prioritizing wellness</td><td>82%</td></tr>
-      </table>
-      <p class="muted"><strong>Today:</strong> Generic plans, siloed tools, <strong>55%</strong> concerned about <strong>privacy</strong>. Coaches are costly; apps are shallow.</p>
+    <!-- 1 Market Opportunity -->
+    <section class="slide slide-opportunity" data-i="1">
+      <h1>1 · The Market Opportunity</h1>
+      <p class="opp-lead">Huge pull toward wellness and AI tools, but <strong>privacy worries</strong> and <strong>shallow personalization</strong> leave room for a better wedge.</p>
+
+      <p class="bar-chart-title">Consumer demand and constraint signals</p>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">US consumers: wellness important (2024)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:82%"></div></div>
+          <span class="bar-pct">82%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">US respondents: prioritizing more wellness than a year earlier (2024)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:58%"></div></div>
+          <span class="bar-pct">58%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Consumers worried about data / privacy (2025)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:55%"></div></div>
+          <span class="bar-pct">55%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Consumers using AI fitness / wellness apps daily (2025)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:49%"></div></div>
+          <span class="bar-pct">49%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">People preferring AI-created workout over human-led (2026)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:10%"></div></div>
+          <span class="bar-pct">10%</span>
+        </div>
+      </div>
+      <div class="bar-axis-wrap">
+        <div class="bar-axis-row">
+          <span></span>
+          <div class="bar-axis-ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+          <span></span>
+        </div>
+        <div class="bar-axis-row" style="margin-top:0.15rem;">
+          <span></span>
+          <p class="bar-axis-label" style="margin-top:0;">Percent</p>
+          <span></span>
+        </div>
+      </div>
     </section>
 
     <!-- 2 Solution -->
