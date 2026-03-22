@@ -3,7 +3,26 @@
 A mobile-first fitness companion built at the **Cursor Hackathon 2026**. TuebiFit combines real-time exercise rep tracking, AI-powered workout and nutrition planning, and a modern React frontend into a single, cohesive platform.
 
 <p align="center">
-  <strong>Demo video</strong> — <em>still under preparation</em>; a link will be added here when ready.
+  <strong>Demo video</strong> — TueBiFit walkthrough (Mar 2026)
+</p>
+
+<p align="center">
+  <!-- Renders on GitHub; local clone: open the linked file in <code>assets/</code> -->
+  <video
+    src="https://github.com/ashutoshjha3103/tuebifit/raw/main/assets/TueBiFit%20-%2022%20March%202026.mp4"
+    controls
+    playsinline
+    width="720"
+    style="max-width:100%;border-radius:12px;background:#0a1929;"
+  >
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center">
+  <a href="assets/TueBiFit%20-%2022%20March%202026.mp4"><code>assets/TueBiFit - 22 March 2026.mp4</code></a>
+  ·
+  <a href="https://github.com/ashutoshjha3103/tuebifit/raw/main/assets/TueBiFit%20-%2022%20March%202026.mp4">Direct download (raw)</a>
 </p>
 
 ---
