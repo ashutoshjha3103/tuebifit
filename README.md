@@ -2,21 +2,18 @@
 
 A mobile-first fitness companion built at the **Cursor Hackathon 2026**. TuebiFit combines real-time exercise rep tracking, AI-powered workout and nutrition planning, and a modern React frontend into a single, cohesive platform.
 
-<!-- Replace the placeholder below with a link to your demo video or GIF -->
 <p align="center">
-  <em>Demo video coming soon</em>
-  <!-- <video src="assets/demo.mp4" width="300" controls></video> -->
-  <!-- or use a GIF: -->
-  <!-- <img src="assets/demo.gif" width="300" alt="TuebiFit demo" /> -->
+  <strong>Demo video</strong> — <em>still under preparation</em>; a link will be added here when ready.
 </p>
 
 ---
 
 ## Features
 
-- **Exercise & Nutrition Agent** — An LLM-powered agent that queries exercise and nutrition databases through MCP servers to build personalized workout plans and meal suggestions.
-- **Rep Tracker** — Upload an exercise video and get an annotated output with skeleton overlay, real-time rep counting, and form feedback. Supports squats, pull-ups, push-ups, and deadlifts.
-- **Mobile Frontend** — A React + Vite single-page app with swipe navigation, designed for mobile-first use.
+- **Exercise & Nutrition Agent** — An LLM-powered agent (Featherless API) that calls **Exercise DB** and **OpenNutrition** MCP servers to build personalized plans. Default generated plans: **3 workout days** (unless the user asks otherwise), **2 days of meals**, with **2–3 foods per meal** (breakfast, lunch, dinner) where tool data allows.
+- **RepCount (in-app)** — Browse annotated demonstration videos (squat, deadlift, pull-up) with on-screen rep counts and form cues; uses pre-rendered clips from `assets/` (live camera pipeline is optional for future work).
+- **Rep Tracker (CLI / scripts)** — Process a video file and produce an annotated output with skeleton overlay, rep counting, and form feedback. Supports squats, pull-ups, push-ups, and deadlifts.
+- **Mobile Frontend** — React + Vite SPA with swipe navigation, **Workouts**, **Nutrition**, **RepCount**, and **Profile** tabs.
 
 ## Built With
 
@@ -28,7 +25,7 @@ This project was made possible by the generous sponsors of the Cursor Hackathon 
 | [Featherless AI](https://featherless.ai) | Powers our LLM agent backend — all workout and nutrition planning runs through the Featherless inference API |
 | [LangChain](https://langchain.com) | Agent orchestration layer — LangChain, LangGraph, and MCP adapters connect our LLM to the exercise and nutrition databases |
 | [Google](https://ai.google.dev/edge/mediapipe) | MediaPipe (Google) provides the BlazePose model that powers real-time pose estimation in the rep tracker |
-| [Vercel](https://vercel.com) | Frontend deployment — the React app is hosted on Vercel |
+| [Google Cloud](https://cloud.google.com/run) | **Production hosting** — full stack (built React static assets + FastAPI + MCP subprocesses) runs in a single **Cloud Run** container built from the repo `Dockerfile` |
 
 ## Prerequisites
 
@@ -118,13 +115,30 @@ Starts a FastAPI + WebSocket server on `http://localhost:8000` for real-time pos
 make run-frontend
 ```
 
-Starts the Vite dev server for the React app.
+Starts the Vite dev server for the React app (default dev port is set in `frontend/vite.config.js`; API calls are proxied to the backend when you run `make run-api` on port `8001`).
+
+### Backend API (plan generation — local dev)
+
+```bash
+make run-api
+```
+
+Runs `uvicorn` for `services/api_server.py` (default **8001**). The React app’s `/api` proxy targets this in development. In **Cloud Run**, the same app serves the built frontend from `frontend/dist`.
 
 ### Docker
+
+**Rep tracker only** (separate image via Makefile):
 
 ```bash
 make build-rep-tracker       # Build the image
 make docker-run-rep-tracker  # Run on port 8000
+```
+
+**Full stack** (same image as Cloud Run — from repository root):
+
+```bash
+docker build -t tuebifit .
+docker run --rm -p 8080:8080 -e FEATHERLESS_API_KEY=... tuebifit
 ```
 
 ## Dependencies
@@ -161,12 +175,38 @@ make docker-run-rep-tracker  # Run on port 8000
 
 ## Deployment
 
-| Service | Platform |
-|---------|----------|
-| Frontend | [Vercel](https://vercel.com) |
-| Rep Tracker | [Hugging Face Spaces](https://huggingface.co/spaces) (Gradio) |
+### Google Cloud Run (recommended — full stack)
 
-For the Hugging Face Space, add a `packages.txt` with the required system libraries:
+The root **`Dockerfile`** builds:
+
+1. **Frontend** (`npm run build`) and copies `dist` into the image  
+2. **MCP servers** (Exercise DB + OpenNutrition)  
+3. **Python** runtime with `uvicorn` serving FastAPI and the static SPA
+
+The container listens on **`PORT`** (defaults to **8080** in the image). Set secrets / env vars in Cloud Run for at least:
+
+- `FEATHERLESS_API_KEY` (required for plan generation)
+
+Optional overrides (see `services/.env` for local dev):
+
+- `FEATHERLESS_MODEL`, `FEATHERLESS_FORMAT_MODEL`
+- `MCP_OPENNUTRITION_PATH`, `MCP_EXERCISEDB_PATH` (usually leave as Dockerfile defaults)
+- `DIST_DIR` (usually `/app/frontend/dist`)
+
+Example (adjust project, region, and service name):
+
+```bash
+gcloud builds submit --tag gcr.io/PROJECT_ID/tuebifit
+gcloud run deploy tuebifit \
+  --image gcr.io/PROJECT_ID/tuebifit \
+  --region REGION \
+  --set-secrets FEATHERLESS_API_KEY=featherless-key:latest \
+  --allow-unauthenticated
+```
+
+### Rep Tracker on Hugging Face (optional)
+
+The standalone Gradio rep-tracker space can still use a `packages.txt` with system libraries, e.g.:
 
 ```
 libgl1
@@ -175,7 +215,7 @@ libegl1
 ffmpeg
 ```
 
-The `pose_landmarker_heavy.task` model file (~29 MB) must be uploaded via Git LFS.
+The `pose_landmarker_heavy.task` model file (~29 MB) should be tracked with **Git LFS** if you host that Space from this repo.
 
 ## License
 
