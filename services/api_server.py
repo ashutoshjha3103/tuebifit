@@ -198,7 +198,12 @@ async def generate_plan(req: GeneratePlanRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Plan generation failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Plan generation failed: {str(e)}")
+        detail = str(e)
+        status = 500
+        if "429" in detail or "Too Many Requests" in detail or "rate" in detail.lower():
+            detail = "Rate limit reached — the AI service is temporarily busy. Please wait a minute and try again."
+            status = 429
+        raise HTTPException(status_code=status, detail=detail)
 
 
 DIST_DIR = Path(os.environ.get("DIST_DIR", Path(__file__).resolve().parent / ".." / "frontend" / "dist"))

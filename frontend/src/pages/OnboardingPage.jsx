@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext'
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, AlertTriangle, RotateCcw } from 'lucide-react'
 import { generatePlan } from '../data/api'
 import samplePlan from '../data/samplePlan'
 import LoadingScreen from '../components/LoadingScreen'
@@ -68,24 +68,26 @@ export default function OnboardingPage() {
     }
   }
 
+  const submitPlan = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const plan = await generatePlan(form)
+      saveProfile(form)
+      savePlan(plan)
+      navigate('/app')
+    } catch (err) {
+      console.error('Plan generation failed:', err.message)
+      setLoading(false)
+      setError(err.message)
+    }
+  }
+
   const handleNext = async () => {
     if (step < STEPS.length - 1) {
       setStep(step + 1)
     } else {
-      saveProfile(form)
-      setLoading(true)
-      setError(null)
-      try {
-        const plan = await generatePlan(form)
-        savePlan(plan)
-        navigate('/app')
-      } catch (err) {
-        console.warn('API call failed, using sample data:', err.message)
-        savePlan(samplePlan)
-        navigate('/app')
-      } finally {
-        setLoading(false)
-      }
+      await submitPlan()
     }
   }
 
@@ -270,6 +272,50 @@ export default function OnboardingPage() {
 
   if (loading) {
     return <LoadingScreen />
+  }
+
+  if (error && step === STEPS.length - 1) {
+    return (
+      <div className="page" style={{
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '40px 32px', textAlign: 'center', gap: 24,
+      }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: 20,
+          background: 'rgba(255, 107, 107, 0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <AlertTriangle size={40} color="#ff6b6b" />
+        </div>
+
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+            Plan generation failed
+          </h2>
+          <p style={{
+            fontSize: 14, color: 'var(--text-secondary)',
+            lineHeight: 1.6, maxWidth: 320, margin: '0 auto',
+          }}>
+            {error}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320 }}>
+          <button className="btn btn-primary" onClick={submitPlan}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <RotateCcw size={18} /> Try Again
+          </button>
+          <button className="btn" onClick={() => setError(null)}
+            style={{
+              background: 'var(--bg-card)', color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+            }}>
+            Go Back & Edit
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const progress = ((step + 1) / STEPS.length) * 100
