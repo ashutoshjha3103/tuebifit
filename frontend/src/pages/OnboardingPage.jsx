@@ -10,6 +10,7 @@ const STEPS = [
   { key: 'name', title: "What's your name?", subtitle: 'We\'ll personalize your experience' },
   { key: 'body', title: 'Your body stats', subtitle: 'This helps us calculate your needs' },
   { key: 'fitnessLevel', title: 'Fitness level', subtitle: 'Where are you on your journey?' },
+  { key: 'equipment', title: 'Available equipment', subtitle: 'We\'ll match exercises to your setup' },
   { key: 'dietaryPreferences', title: 'Dietary preferences', subtitle: 'We\'ll tailor your meal plans' },
   { key: 'allergies', title: 'Any food allergies?', subtitle: 'We\'ll keep these out of your plans' },
   { key: 'activityLevel', title: 'Current activity', subtitle: 'How active is your daily life?' },
@@ -27,6 +28,12 @@ const DIET_OPTIONS = [
   { value: 'vegan', label: 'Vegan', desc: 'No animal products', icon: '🌿' },
   { value: 'vegetarian', label: 'Vegetarian', desc: 'No meat or fish', icon: '🥗' },
   { value: 'no restrictions', label: 'No Restrictions', desc: 'I eat everything', icon: '🍽️' },
+]
+
+const EQUIPMENT_OPTIONS = [
+  { value: 'none', label: 'No Equipment', desc: 'Bodyweight exercises only', icon: '🤸' },
+  { value: 'basic', label: 'Dumbbells & Barbells', desc: 'Basic free weights at home', icon: '🏠' },
+  { value: 'full gym', label: 'Full Gym Access', desc: 'Machines, cables, full rack', icon: '🏋️' },
 ]
 
 const ACTIVITY_OPTIONS = [
@@ -51,6 +58,7 @@ export default function OnboardingPage() {
       case 'name': return form.name.trim().length > 0
       case 'body': return form.weight && form.age && form.height
       case 'fitnessLevel': return !!form.fitnessLevel
+      case 'equipment': return !!form.equipment
       case 'dietaryPreferences': return !!form.dietaryPreferences
       case 'allergies': return true
       case 'activityLevel': return !!form.activityLevel
@@ -132,6 +140,23 @@ export default function OnboardingPage() {
               <div key={opt.value}
                 className={`option-card ${form.fitnessLevel === opt.value ? 'selected' : ''}`}
                 onClick={() => update('fitnessLevel', opt.value)}>
+                <div className="icon">{opt.icon}</div>
+                <div>
+                  <div className="label">{opt.label}</div>
+                  <div className="desc">{opt.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+
+      case 'equipment':
+        return (
+          <div className="option-cards slide-up">
+            {EQUIPMENT_OPTIONS.map((opt) => (
+              <div key={opt.value}
+                className={`option-card ${form.equipment === opt.value ? 'selected' : ''}`}
+                onClick={() => update('equipment', opt.value)}>
                 <div className="icon">{opt.icon}</div>
                 <div>
                   <div className="label">{opt.label}</div>

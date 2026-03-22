@@ -7,6 +7,7 @@ export async function generatePlan(profile) {
     weight: parseFloat(profile.weight),
     height: parseFloat(profile.height),
     fitness_level: profile.fitnessLevel,
+    equipment: profile.equipment || 'none',
     dietary_preferences: profile.dietaryPreferences,
     activity_level: profile.activityLevel,
     allergies: profile.allergies || '',

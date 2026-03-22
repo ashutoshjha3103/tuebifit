@@ -60,6 +60,7 @@ class GeneratePlanRequest(BaseModel):
     weight: float
     height: float
     fitness_level: str
+    equipment: str = "none"
     dietary_preferences: str
     activity_level: str
     allergies: Optional[str] = ""
@@ -102,9 +103,19 @@ def _build_profile(req: GeneratePlanRequest) -> Profile:
     )
 
 
+def _equipment_description(eq: str) -> str:
+    return {
+        "none": "I have no equipment, only bodyweight exercises",
+        "basic": "I have dumbbells and barbells at home",
+        "full gym": "I have full gym access with machines, cables, and racks",
+    }.get(eq, "no equipment")
+
+
 def _build_query(req: GeneratePlanRequest) -> str:
+    equipment_ctx = f"Equipment: {_equipment_description(req.equipment)}. Only suggest exercises I can do with my available equipment."
+
     if req.query:
-        return req.query
+        return f"{req.query} {equipment_ctx}"
 
     parts = [
         f"Build me a 7-day workout plan and meal plan.",
@@ -116,6 +127,7 @@ def _build_query(req: GeneratePlanRequest) -> str:
     parts.append(
         f"Session duration: {req.preferred_duration_hrs}h {req.preferred_duration_mins}m."
     )
+    parts.append(equipment_ctx)
     parts.append("Include exercise image links. Suggest meals for my goals.")
     return " ".join(parts)
 

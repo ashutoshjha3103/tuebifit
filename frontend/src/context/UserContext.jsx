@@ -24,6 +24,7 @@ const defaultProfile = {
   age: '',
   height: '',
   fitnessLevel: '',
+  equipment: '',
   dietaryPreferences: '',
   allergies: '',
   activityLevel: '',

@@ -36,7 +36,28 @@ export default function DietPage() {
     )
   }
 
-  const daily_targets = planData?.nutrition_plan?.daily_targets
+  const computedTotals = useMemo(() => {
+    let calories = 0, protein = 0, carbs = 0, fat = 0, dayCount = 0
+    for (const day of normalizedMeals) {
+      dayCount++
+      for (const meal of day.items) {
+        for (const food of (meal.foods || [])) {
+          calories += Number(food.calories) || 0
+          protein += Number(food.protein_g) || 0
+          carbs += Number(food.carbs_g) || 0
+          fat += Number(food.fat_g) || 0
+        }
+      }
+    }
+    const avg = (v) => dayCount > 0 ? Math.round(v / dayCount) : 0
+    return {
+      calories: avg(calories),
+      protein_g: avg(protein),
+      carbs_g: avg(carbs),
+      fat_g: avg(fat),
+    }
+  }, [normalizedMeals])
+
   const notes = planData?.nutrition_plan?.notes
   const toggleDay = (i) => setExpandedDay(expandedDay === i ? -1 : i)
 
@@ -56,25 +77,23 @@ export default function DietPage() {
         </p>
       </div>
 
-      {/* Daily targets */}
-      {daily_targets && (
-        <div className="card" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-around' }}>
-          {[
-            { label: 'Calories', value: daily_targets.calories, icon: Flame, color: '#ff7043' },
-            { label: 'Protein', value: daily_targets.protein_g ? `${daily_targets.protein_g}g` : '—', icon: Beef, color: '#ef5350' },
-            { label: 'Carbs', value: daily_targets.carbs_g ? `${daily_targets.carbs_g}g` : '—', icon: Wheat, color: '#ffa726' },
-            { label: 'Fat', value: daily_targets.fat_g ? `${daily_targets.fat_g}g` : '—', icon: Droplets, color: '#42a5f5' },
-          ].map((t) => (
-            <div key={t.label} style={{ textAlign: 'center' }}>
-              <t.icon size={16} color={t.color} style={{ marginBottom: 4 }} />
-              <div style={{ fontSize: 16, fontWeight: 700 }}>{t.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
-                {t.label}
-              </div>
+      {/* Daily averages (computed from actual meal data) */}
+      <div className="card" style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-around' }}>
+        {[
+          { label: 'Calories', value: computedTotals.calories, icon: Flame, color: '#ff7043' },
+          { label: 'Protein', value: `${computedTotals.protein_g}g`, icon: Beef, color: '#ef5350' },
+          { label: 'Carbs', value: `${computedTotals.carbs_g}g`, icon: Wheat, color: '#ffa726' },
+          { label: 'Fat', value: `${computedTotals.fat_g}g`, icon: Droplets, color: '#42a5f5' },
+        ].map((t) => (
+          <div key={t.label} style={{ textAlign: 'center' }}>
+            <t.icon size={16} color={t.color} style={{ marginBottom: 4 }} />
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{t.value}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+              {t.label}/day
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
 
       {/* Day rows */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
