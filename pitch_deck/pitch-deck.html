@@ -231,21 +231,62 @@
     /* Slide: Market problem — larger body text */
     .slide.slide-market-problem h1 {
       font-size: clamp(2rem, 4.2vw, 2.6rem);
+      margin-bottom: 0.9rem;
     }
-    .slide.slide-market-problem ul {
-      font-size: clamp(1.05rem, 2vw, 1.22rem);
-      line-height: 1.6;
+    .slide.slide-market-problem .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.95rem;
+      margin-top: 0.35rem;
     }
-    .slide.slide-market-problem ul ul {
-      font-size: clamp(1rem, 1.8vw, 1.12rem);
+    .slide.slide-market-problem .problem-card {
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      background: rgba(10, 25, 41, 0.58);
+      padding: 0.9rem;
+      box-shadow: inset 0 0 0 1px rgba(0, 230, 118, 0.06);
+      min-height: 210px;
+    }
+    .slide.slide-market-problem .problem-card h2 {
+      font-size: clamp(1.08rem, 2vw, 1.3rem);
+      margin-bottom: 0.55rem;
+    }
+    .slide.slide-market-problem .problem-card ul {
+      margin: 0;
+      margin-left: 1rem;
+      font-size: clamp(0.96rem, 1.7vw, 1.08rem);
+      line-height: 1.5;
+    }
+    .slide.slide-market-problem .problem-card li {
+      margin-bottom: 0.42rem;
+    }
+    .slide.slide-market-problem .problem-impact {
+      margin-top: 0.55rem;
+      display: inline-block;
+      color: var(--green);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      background: rgba(0, 230, 118, 0.08);
+      border: 1px solid rgba(0, 230, 118, 0.26);
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+    }
+    @media (max-width: 860px) {
+      .slide.slide-market-problem .problem-grid {
+        grid-template-columns: 1fr;
+      }
+      .slide.slide-market-problem .problem-card {
+        min-height: auto;
+      }
     }
 
     /* Slide: Our solution — larger text */
     .slide.slide-solution h1 {
       font-size: clamp(2rem, 4.2vw, 2.6rem);
     }
-    .slide.slide-solution .muted {
-      font-size: clamp(1.08rem, 2.05vw, 1.24rem);
+    .slide.slide-solution p {
+      font-size: clamp(1.25rem, 2.05vw, 1.24rem);
       line-height: 1.6;
     }
     .slide.slide-solution h2 {
@@ -527,76 +568,81 @@
     <!-- 1 Market problem -->
     <section class="slide slide-market-problem" data-i="1">
       <h1>1 · The market problem</h1>
-      <ul>
-        <li><strong>Beginners</strong>
+      <div class="problem-grid">
+        <article class="problem-card">
+          <h2>Beginners</h2>
           <ul>
-            <li><strong>Plan + cues</strong> — right program + <strong>how to perform</strong> each exercise</li>
-            <ul>
-            <li>Scattered sources → time lost, <strong>bad form</strong></li>
-            </ul>
+            <li><strong>Program uncertainty:</strong> New users struggle to pick the right plan and execute exercises correctly.</li>
+            <li><strong>Fragmented guidance:</strong> Advice is scattered across apps and creators, increasing confusion and <strong>injury risk</strong>.</li>
           </ul>
-        </li>
+          <span class="problem-impact">Impact: Early churn in weeks 1-8</span>
+        </article>
 
-        <li><strong>Intermediate &amp; advanced</strong>
+        <article class="problem-card">
+          <h2>Intermediate &amp; advanced</h2>
           <ul>
-            <li><strong>Diet</strong> — macros / targets <strong>off</strong> vs. goals</li>
-            <li><strong>Splits &amp; muscle focus</strong> — misaligned with gear, recovery, priorities</li>
+            <li><strong>Nutrition mismatch:</strong> Calorie and macro targets often fail to match body-composition goals.</li>
+            <li><strong>Programming drift:</strong> Splits and muscle focus are misaligned with equipment, recovery capacity, and priorities.</li>
           </ul>
-        </li>
-      </ul>
+          <span class="problem-impact">Impact: Stalled progress despite consistency</span>
+        </article>
+      </div>
     </section>
 
     <!-- 2 Market Opportunity -->
     <section class="slide slide-opportunity" data-i="2">
-      <h1>2 · The Market Opportunity</h1>
-      <p class="opp-lead">Huge pull toward wellness and AI tools, but <strong>privacy worries</strong> and <strong>shallow personalization</strong> leave room for a better wedge.</p>
+  <h1>2 · The Market Opportunity</h1>
+  <p class="opp-lead">The "Wellness Wave" is colliding with a "Trust Gap." We sit at the intersection of high demand and unaddressed privacy concerns.</p>
 
-      <p class="bar-chart-title">Consumer demand and constraint signals</p>
-      <div class="bar-chart">
-        <div class="bar-row">
-          <span class="bar-label">US consumers: wellness important (2024)</span>
-          <div class="bar-track"><div class="bar-fill" style="width:82%"></div></div>
-          <span class="bar-pct">82%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">US respondents: prioritizing more wellness than a year earlier (2024)</span>
-          <div class="bar-track"><div class="bar-fill" style="width:58%"></div></div>
-          <span class="bar-pct">58%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">Consumers worried about data / privacy (2025)</span>
-          <div class="bar-track"><div class="bar-fill" style="width:55%"></div></div>
-          <span class="bar-pct">55%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">Consumers using AI fitness / wellness apps daily (2025)</span>
-          <div class="bar-track"><div class="bar-fill" style="width:49%"></div></div>
-          <span class="bar-pct">49%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">People preferring AI-created workout over human-led (2026)</span>
-          <div class="bar-track"><div class="bar-fill" style="width:10%"></div></div>
-          <span class="bar-pct">10%</span>
-        </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 1.5rem;">
+    <div>
+      <h2 style="font-size: 1.1rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 1.25rem;">The Pull (Market Demand)</h2>
+      
+      <div class="bar-row">
+        <span class="bar-label">Wellness Importance</span>
+        <div class="bar-track"><div class="bar-fill" style="width:82%"></div></div>
+        <span class="bar-pct">82%</span>
       </div>
-      <div class="bar-axis-wrap">
-        <div class="bar-axis-row">
-          <span></span>
-          <div class="bar-axis-ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
-          <span></span>
-        </div>
-        <div class="bar-axis-row" style="margin-top:0.15rem;">
-          <span></span>
-          <p class="bar-axis-label" style="margin-top:0;">Percent</p>
-          <span></span>
-        </div>
+      
+      <div class="bar-row">
+        <span class="bar-label">Prioritizing More Wellness</span>
+        <div class="bar-track"><div class="bar-fill" style="width:58%"></div></div>
+        <span class="bar-pct">58%</span>
       </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Daily AI App Usage</span>
+        <div class="bar-track"><div class="bar-fill" style="width:49%"></div></div>
+        <span class="bar-pct">49%</span>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="font-size: 1.1rem; text-transform: uppercase; color: #ff5252; letter-spacing: 0.05em; margin-bottom: 1.25rem;">The Friction (Market Gap)</h2>
+      
+      <div class="bar-row">
+        <span class="bar-label">Worry about AI Data Privacy</span>
+        <div class="bar-track" style="border-color: rgba(255, 82, 82, 0.3);"><div class="bar-fill" style="width:55%; background: linear-gradient(90deg, #d32f2f, #ff5252);"></div></div>
+        <span class="bar-pct" style="color: #ff5252;">55%</span>
+      </div>
+
+      <div class="bar-row">
+        <span class="bar-label">Trust AI over Human Plans</span>
+        <div class="bar-track" style="border-color: rgba(255, 82, 82, 0.3);"><div class="bar-fill" style="width:10%; background: linear-gradient(90deg, #d32f2f, #ff5252);"></div></div>
+        <span class="bar-pct" style="color: #ff5252;">10%</span>
+      </div>
+
+      <p class="muted" style="margin-top: 1rem; border-left: 2px solid #ff5252; padding-left: 1rem;">
+        <strong>The Wedge:</strong> By solving for <strong>privacy</strong> and <strong>scientific grounding</strong>, we convert the 90% who currently distrust generic AI tools.
+      </p>
+    </div>
+  </div>
     </section>
 
     <!-- 3 Solution -->
     <section class="slide slide-solution" data-i="3">
       <h1>3 · Our Solution</h1>
-      <p class="muted" style="margin-bottom:1rem;">A mobile app where an <strong>AI agent</strong> builds <i>personalized workout + meal plans</i> from <strong>real exercise (MCP) &amp; nutrition DBs (MCP)</strong>, along with <strong>on-device assistance</strong>.</p>
+      <p style="margin-bottom:1rem; line-height:1.5;">A mobile app where an <strong>AI agent</strong> builds <i>personalized workout + meal plans</i> from <strong>real exercise (MCP) &amp; nutrition DBs (MCP)</strong>, along with <strong>on-device assistance</strong>.</p>
       <h2>Why Us?</h2>
       <ul>
         <li><strong>Grounded and contextualized</strong> — tool-backed scientific data, not vibes-only convo or chat</li>
