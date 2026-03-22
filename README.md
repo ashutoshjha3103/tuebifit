@@ -7,22 +7,20 @@ A mobile-first fitness companion built at the **Cursor Hackathon 2026**. TuebiFi
 </p>
 
 <p align="center">
-  <!-- Renders on GitHub; local clone: open the linked file in <code>assets/</code> -->
+  <!-- Embedded player on GitHub (uses raw file from the repo). Clone: same path under <code>assets/</code> -->
   <video
-    src="https://github.com/ashutoshjha3103/tuebifit/raw/main/assets/TueBiFit%20-%2022%20March%202026.mp4"
     controls
     playsinline
+    preload="metadata"
     width="720"
     style="max-width:100%;border-radius:12px;background:#0a1929;"
   >
+    <source
+      src="https://github.com/ashutoshjha3103/tuebifit/raw/main/assets/TueBiFit%20-%2022%20March%202026.mp4"
+      type="video/mp4"
+    />
     Your browser does not support the video tag.
   </video>
-</p>
-
-<p align="center">
-  <a href="assets/TueBiFit%20-%2022%20March%202026.mp4"><code>assets/TueBiFit - 22 March 2026.mp4</code></a>
-  ·
-  <a href="https://github.com/ashutoshjha3103/tuebifit/raw/main/assets/TueBiFit%20-%2022%20March%202026.mp4">Direct download (raw)</a>
 </p>
 
 ---
