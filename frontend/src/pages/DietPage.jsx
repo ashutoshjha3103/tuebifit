@@ -1,6 +1,60 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useUser } from '../context/UserContext'
-import { UtensilsCrossed, ChevronDown, ChevronUp, Flame, Beef, Wheat, Droplets } from 'lucide-react'
+import {
+  UtensilsCrossed,
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  Beef,
+  Wheat,
+  Droplets,
+  Sparkles,
+} from 'lucide-react'
+
+/** Map food names to a sample “featured partner” (same slot brands could buy in a real app). */
+function getPartnerPlacement(foodName) {
+  const raw = (foodName || '').trim()
+  if (!raw) return null
+  const rules = [
+    {
+      test: /protein\s*bar|high[\s-]*protein\s*bar|nutrition\s*bar|energy\s*bar|granola\s*bar/i,
+      brand: 'MaxProtein',
+      category: 'Protein & snack bars',
+      detail: 'Limited-time deals on multipacks — see flavors that match your macro goals.',
+    },
+    {
+      test: /smoothie|protein\s*shake|meal\s*replace|shake(?!\s*weight)/i,
+      brand: 'BlendWell Co.',
+      category: 'Ready-to-blend & shakes',
+      detail: 'Smoothie kits and RTD shakes with free delivery on your first order.',
+    },
+    {
+      test: /sports\s*drink|electrolyte|isotonic|energy\s*drink/i,
+      brand: 'HydraFlow',
+      category: 'Hydration & performance drinks',
+      detail: 'Electrolyte packs tuned for training days — redeem in app.',
+    },
+    {
+      test: /pre[\s-]*workout|bcaa|creatine\s*(powder|gummies)?$/i,
+      brand: 'LiftLabs Nutrition',
+      category: 'Sports supplements',
+      detail: 'Third-party tested formulas — subscriber perks inside TueBiFit.',
+    },
+    {
+      test: /greek\s*yogurt|protein\s*yogurt|skyr/i,
+      brand: 'PureStrain Dairy',
+      category: 'High-protein dairy',
+      detail: 'High-protein cups and tubs — coupons when you plan them in meals.',
+    },
+  ]
+  for (const r of rules) {
+    if (r.test.test(raw)) {
+      return { brand: r.brand, category: r.category, detail: r.detail }
+    }
+  }
+  return null
+}
 
 function normalizeMeals(nutritionPlan) {
   const meals = nutritionPlan?.meals || []
@@ -18,6 +72,9 @@ export default function DietPage() {
   const { planData } = useUser()
   const [expandedDay, setExpandedDay] = useState(0)
   const [selectedMeal, setSelectedMeal] = useState(null)
+  const [foodModal, setFoodModal] = useState(null)
+
+  const closeFoodModal = useCallback(() => setFoodModal(null), [])
 
   const normalizedMeals = useMemo(
     () => normalizeMeals(planData?.nutrition_plan),
@@ -73,7 +130,9 @@ export default function DietPage() {
           {normalizedMeals.length > 1
             ? `${normalizedMeals.length}-day meal plan`
             : `${normalizedMeals[0]?.items?.length || 0} meals`
-          } · Tap to view details
+          }
+          {' · '}
+          Tap a <strong style={{ color: 'var(--green-primary)' }}>food</strong> for nutrition details &amp; featured partners
         </p>
       </div>
 
@@ -168,30 +227,66 @@ export default function DietPage() {
                       </div>
                       <div style={{ marginTop: 8, borderTop: '1px solid var(--border-color)', paddingTop: 8 }}>
                         {meal.foods.map((food, k) => (
-                          <div key={k} style={{
-                            fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4,
-                            lineHeight: 1.4,
-                          }}>
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setFoodModal(food)
+                            }}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              textAlign: 'left',
+                              fontSize: 11,
+                              color: 'var(--text-secondary)',
+                              marginBottom: 6,
+                              lineHeight: 1.4,
+                              background: 'var(--bg-input)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: 8,
+                              padding: '8px 10px',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.15s, background 0.15s',
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
                             <div style={{
                               display: 'flex', justifyContent: 'space-between', gap: 6,
+                              alignItems: 'flex-start',
                             }}>
                               <span style={{
                                 flex: 1, minWidth: 0,
                                 wordWrap: 'break-word', overflowWrap: 'break-word',
+                                fontWeight: 600,
+                                color: 'var(--text-primary)',
                               }}>
                                 {food.name}
                               </span>
                               <span style={{
                                 color: 'var(--text-muted)', flexShrink: 0,
-                                whiteSpace: 'nowrap',
+                                whiteSpace: 'nowrap', fontSize: 10,
                               }}>
                                 {food.amount}
                               </span>
                             </div>
-                            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                              {food.calories}cal · {food.protein_g}p · {food.carbs_g}c · {food.fat_g}f
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                              {food.calories} cal · {food.protein_g}g P · {food.carbs_g}g C · {food.fat_g}g F
                             </div>
-                          </div>
+                            {getPartnerPlacement(food.name) && (
+                              <div style={{
+                                fontSize: 9,
+                                color: 'var(--green-primary)',
+                                marginTop: 6,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}>
+                                <Sparkles size={10} />
+                                May include partner offer
+                              </div>
+                            )}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -217,6 +312,190 @@ export default function DietPage() {
           ))}
         </div>
       )}
+
+      {/* Full-page food detail — portalled like Workouts exercise view (escapes swipe transform) */}
+      {foodModal && typeof document !== 'undefined' && document.getElementById('detail-portal') &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="food-detail-title"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 50,
+              background: 'var(--bg-primary)',
+              display: 'flex',
+              flexDirection: 'column',
+              pointerEvents: 'auto',
+            }}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '14px 20px',
+              borderBottom: '1px solid var(--border-color)',
+              background: 'var(--bg-primary)',
+              flexShrink: 0,
+            }}>
+              <button
+                type="button"
+                onClick={closeFoodModal}
+                aria-label="Back to nutrition plan"
+                style={{
+                  background: 'var(--bg-card)',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <ChevronDown size={18} />
+              </button>
+              <h3
+                id="food-detail-title"
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  margin: 0,
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {foodModal.name}
+              </h3>
+            </div>
+
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              padding: '20px 20px 40px',
+              maxWidth: 600,
+              width: '100%',
+              margin: '0 auto',
+            }}
+            >
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+                Serving{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>{foodModal.amount || '—'}</strong>
+              </p>
+
+              <div className="card" style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 0,
+                padding: 0,
+                marginBottom: 20,
+                overflow: 'hidden',
+              }}>
+                {[
+                  ['Calories', `${foodModal.calories ?? '—'}`, 'kcal'],
+                  ['Protein', `${foodModal.protein_g ?? '—'}`, 'g'],
+                  ['Carbs', `${foodModal.carbs_g ?? '—'}`, 'g'],
+                  ['Fat', `${foodModal.fat_g ?? '—'}`, 'g'],
+                ].map(([lab, val, unit], idx) => (
+                  <div
+                    key={lab}
+                    style={{
+                      textAlign: 'center',
+                      padding: '16px 10px',
+                      borderRight: idx % 2 === 0 ? '1px solid var(--border-color)' : 'none',
+                      borderBottom: idx < 2 ? '1px solid var(--border-color)' : 'none',
+                    }}
+                  >
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--green-primary)' }}>
+                      {val}
+                      <span style={{ fontSize: 12, fontWeight: 600, marginLeft: 2 }}>{unit}</span>
+                    </div>
+                    <div style={{
+                      fontSize: 10,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      marginTop: 6,
+                      letterSpacing: 0.5,
+                    }}>{lab}</div>
+                  </div>
+                ))}
+              </div>
+
+              {(() => {
+                const partner = getPartnerPlacement(foodModal.name)
+                if (!partner) {
+                  return (
+                    <div className="card" style={{ padding: 14 }}>
+                      <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+                        We don’t have a partner offer for this item yet, but we’re always on the lookout for brands
+                        that fit how you eat — so we can bring you the best recommendations.
+                      </p>
+                    </div>
+                  )
+                }
+                return (
+                  <div style={{
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    border: '1px solid var(--green-primary)',
+                    background: 'linear-gradient(135deg, var(--green-glow) 0%, var(--bg-card) 100%)',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 14px',
+                      background: 'var(--green-glow-strong)',
+                      borderBottom: '1px solid var(--border-color)',
+                    }}>
+                      <Sparkles size={18} color="var(--green-primary)" />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green-primary)', letterSpacing: 0.3 }}>
+                        Featured partner
+                      </span>
+                    </div>
+                    <div style={{ padding: 16 }}>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                        {partner.category}
+                      </p>
+                      <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
+                        {partner.brand}
+                      </p>
+                      <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>
+                        {partner.detail}
+                      </p>
+                      <button
+                        type="button"
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: 14,
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, var(--green-primary), var(--green-dark))',
+                          color: '#0a1929',
+                        }}
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        See offer
+                      </button>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>,
+          document.getElementById('detail-portal')
+        )}
     </div>
   )
 }
